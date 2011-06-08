@@ -1,4 +1,3 @@
-/*
 Copyright (C) 2011 by Billy Schoenberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,19 +17,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-*/
 
-package com.bschoenberg.components.layouts.supportClasses
-{
-    import spark.layouts.supportClasses.DropLocation;
-    
-    public class TreeDropLocation extends DropLocation
-    {   
-        public var parentDropIndex:int;
-        
-        public function TreeDropLocation()
-        {
-            super();
-        }
-    }
-}
+
+This is the Flex 4 Tree.
+
+This is built on Flex 4.5 Hero, supporting Mobile, and regular Flex Development.
+
+I imagine this code should compile in 4.1 w/ a little bit of work (removing all dependencies on touch etc).
+
+contact wasbridge@gmail.com with any questions and I will see what I can do!
