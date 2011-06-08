@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnableComponent xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:s="library://ns.adobe.com/flex/spark"
+    skinClass="com.bschoenberg.components.skins.ExpandButtonSkin"
+    minWidth="20"
+    minHeight="20"
+    creationComplete="{setSkinState()}"
+    click="clickHandler(event)">
+    
+    <fx:Script>
+        <![CDATA[
+            
+            private var _expanded:Boolean;
+            
+            public function get expanded():Boolean { return _expanded; }
+            public function set expanded(value:Boolean):void
+            {
+                _expanded = value;
+                setSkinState();
+            }
+            
+            protected function setSkinState():void
+            {
+                if(_expanded)
+                    skin.currentState = "expanded";
+                else
+                    skin.currentState = "closed";
+                
+                skin.invalidateDisplayList();
+            }
+            
+            protected function clickHandler(event:MouseEvent):void
+            {
+                if(!enabled)
+                    return;
+                
+                expanded = !expanded;
+            }
+            
+            public override function set enabled(value:Boolean):void
+            {
+                super.enabled = value;
+                if(!value)
+                    expanded = true;
+            }
+            
+        ]]>
+    </fx:Script>
+    
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+    </fx:Declarations>
+    
+</s:SkinnableComponent>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:s="library://ns.adobe.com/flex/spark"
+    xmlns:mx="library://ns.adobe.com/flex/halo"
+    currentState="closed">
+
+    <fx:Metadata>
+        [HostComponent("spark.components.supportClasses.SkinnableComponent")]
+    </fx:Metadata>
+    
+    <fx:Script>
+        <![CDATA[
+            
+            protected override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+            {
+                graphics.clear();
+                super.updateDisplayList(unscaledWidth,unscaledHeight);
+                graphics.beginFill(0x000000,1);
+                
+                if(currentState == "closed")
+                {
+                    graphics.moveTo(0,0);
+                    graphics.lineTo(unscaledWidth,unscaledHeight/2);
+                    graphics.lineTo(0,unscaledHeight);
+                }
+                else
+                {
+                    graphics.moveTo(0,0);
+                    graphics.lineTo(unscaledWidth,0);
+                    graphics.lineTo(unscaledWidth/2,unscaledHeight);
+                }
+                
+                graphics.endFill();
+                
+                graphics.beginFill(0x000000,0);
+                graphics.drawRect(0,0,unscaledWidth, unscaledHeight);
+                graphics.endFill();
+            }
+        ]]>
+    </fx:Script>
+    
+    <s:states>
+        <s:State name="expanded"/>
+        <s:State name="closed"/>
+    </s:states>
+
+    
+    <s:Label id="labelDisplay" horizontalCenter="0" verticalCenter="0"/>
+    
+</s:SparkSkin>
