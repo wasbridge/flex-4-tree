@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 Copyright (C) 2011 by Billy Schoenberg
 
@@ -19,8 +20,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
-
-<?xml version="1.0" encoding="utf-8"?>
 <s:SkinnableComponent xmlns:fx="http://ns.adobe.com/mxml/2009"
     xmlns:s="library://ns.adobe.com/flex/spark"
     skinClass="com.bschoenberg.components.skins.ExpandButtonSkin"
