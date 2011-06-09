@@ -206,10 +206,12 @@ package com.bschoenberg.components.supportClasses
             
             clearCaches();
             
+            var oldParent:ITreeItem = item.parent;
+            
             silentRemove(item);
             silentAdd(item,index,parentItem);
             
-            dispatchEvent(new TreeDataEvent(TreeDataEvent.MOVE,item,parentItem,index));
+            dispatchEvent(new TreeDataEvent(TreeDataEvent.MOVE,item,parentItem,oldParent,index));
         }
         
         private function handler(e:Event):void

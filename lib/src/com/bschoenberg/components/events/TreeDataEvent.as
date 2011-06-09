@@ -35,23 +35,27 @@ package com.bschoenberg.components.events
         private var _parent:ITreeItem;
         private var _item:ITreeItem;
         private var _index:int;
+        private var _oldParent:ITreeItem;
         
-        public function TreeDataEvent(type:String, item:ITreeItem, parent:ITreeItem=null, index:int=-1, bubbles:Boolean=false, cancelable:Boolean=false)
+        public function TreeDataEvent(type:String, item:ITreeItem, 
+            parent:ITreeItem=null, oldParent:ITreeItem=null, index:int=-1, 
+            bubbles:Boolean=false, cancelable:Boolean=false)
         {
             super(type, bubbles, cancelable);
             _item = item;
             _parent = parent;
             _index = index;
+            _oldParent = oldParent;
         }
         
         public override function clone():Event
         {
-            return new TreeDataEvent(type,item,parent, _index);
+            return new TreeDataEvent(type,item,parent, oldParent, index);
         }
         
         public function get item():ITreeItem { return _item; }
+        public function get oldParent():ITreeItem { return _oldParent; }
         public function get parent():ITreeItem { return _parent; }
         public function get index():int { return _index; }
-
     }
 }
