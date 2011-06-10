@@ -21,23 +21,24 @@ THE SOFTWARE.
 */
 
 package com.bschoenberg.components
-{    
+{
     import com.bschoenberg.components.supportClasses.ITreeItem;
     import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
     
+    import flash.display.DisplayObject;
+    import flash.events.EventDispatcher;
+    import flash.events.IEventDispatcher;
     import flash.events.MouseEvent;
     
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
+    import mx.core.mx_internal;
     
-    import spark.components.Image;
-    import spark.components.Label;
-    import spark.components.supportClasses.ItemRenderer;
-    import spark.components.supportClasses.TextBase;
+    import spark.components.MobileItemRenderer;
     
-    public class BaseTreeItemRenderer extends ItemRenderer implements ITreeLayoutElement
+    public class MobileTreeItemRenderer extends MobileItemRenderer implements ITreeLayoutElement
     {   
-        protected var expandButton:ExpandButton;
+        public var expandButton:ExpandButton;
         
         protected var item:ITreeItem;
         protected var horizontalGap:Number;
@@ -45,10 +46,10 @@ package com.bschoenberg.components
         private var _indent:Number;
         private var _itemChanged:Boolean;
         
-        public function BaseTreeItemRenderer()
+        public function MobileTreeItemRenderer()
         {
             super();
-            horizontalGap = 10;
+            horizontalGap = 15;
         }
         
         protected override function createChildren():void
@@ -57,11 +58,10 @@ package com.bschoenberg.components
             
             expandButton = new ExpandButton();
             expandButton.addEventListener(MouseEvent.CLICK, expandButtonClickHandler);
-            addElement(expandButton);
+            attachDragListeners(expandButton);
+            addChild(DisplayObject(expandButton));
             
-            labelDisplay = new Label();
-            labelDisplay.styleParent = tree;
-            addElement(labelDisplay);
+            attachFixedListeners(labelDisplay);
         }
         
         protected override function commitProperties():void
@@ -76,16 +76,16 @@ package com.bschoenberg.components
             }
         }
         
-        protected override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+        protected override function layoutContents(unscaledWidth:Number, unscaledHeight:Number):void
         {
-            super.updateDisplayList(unscaledWidth,unscaledHeight);
+            super.layoutContents(unscaledWidth,unscaledHeight);
             
-            expandButton.setLayoutBoundsSize(unscaledHeight * .3,unscaledHeight *.3);
+            expandButton.setLayoutBoundsSize(unscaledHeight * .2,unscaledHeight *.2);
             expandButton.setLayoutBoundsPosition(horizontalGap + indent, 
                 unscaledHeight/2 - expandButton.height/2);
             
-            labelDisplay.setLayoutBoundsPosition(expandButton.x + expandButton.width + horizontalGap,
-                unscaledHeight/2 - labelDisplay.height/2);
+            labelDisplay.x = expandButton.x + expandButton.width + horizontalGap;
+            labelDisplay.y = unscaledHeight/2 - labelDisplay.height/2;
             labelDisplay.width = unscaledWidth - labelDisplay.x;
         }
         
@@ -94,14 +94,64 @@ package com.bschoenberg.components
             item.expanded = expandButton.expanded;            
         }
         
-        protected function removeEventListeners(item:ITreeItem):void
+        protected function removeEventListeners():void
         {
             
         }
         
-        protected function addEventListeners(item:ITreeItem):void
+        protected function addEventListeners():void
         {
             
+        }
+        
+        protected function dragMouseDown(e:MouseEvent):void
+        {
+            tree.dragEnabled = true;
+        }
+        
+        protected function dragMouseUp(e:MouseEvent):void
+        {
+            tree.dragEnabled = false;
+        }
+        
+        protected function fixedMouseDown(e:MouseEvent):void
+        {
+            //this stops drags inside of the input from dragging
+            //this item renderer;
+            e.preventDefault();
+            setSelected(true);
+        }
+        
+        protected function setSelected(value:Boolean):void
+        {
+            tree.mx_internal::setSelectedItem(item,value);
+        }
+        
+        protected function attachDragListeners(target:IEventDispatcher):void
+        {
+            target.addEventListener(MouseEvent.MOUSE_DOWN, dragMouseDown);
+            target.addEventListener(MouseEvent.MOUSE_UP, dragMouseUp);
+        }
+        
+        protected function attachFixedListeners(target:EventDispatcher):void
+        {
+            target.addEventListener(MouseEvent.MOUSE_DOWN, fixedMouseDown);
+        }
+        
+        public override function set data(value:Object):void
+        {
+            if(item)
+                removeEventListeners();
+            
+            super.data = value;
+            item = ITreeItem(value);
+            
+            if(item)
+                addEventListeners();
+            
+            _itemChanged = true;
+            invalidateProperties();
+            invalidateDisplayList();
         }
         
         protected function get tree():Tree 
@@ -140,22 +190,6 @@ package com.bschoenberg.components
                 return tree.getTreeLayoutElement(item.parent);
             
             return null;
-        }
-        
-        public override function set data(value:Object):void
-        {
-            if(item)
-                removeEventListeners(item);
-            
-            super.data = value;
-            item = ITreeItem(value);
-            
-            if(item)
-                addEventListeners(item);
-            
-            _itemChanged = true;
-            invalidateProperties();
-            invalidateDisplayList();
         }
     }
 }

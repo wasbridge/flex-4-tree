@@ -82,7 +82,7 @@ package com.bschoenberg.components
             
             layout = new TreeLayout();
             
-            itemRenderer = new ClassFactory(BaseTreeItemRenderer);
+            itemRenderer = new ClassFactory(TreeItemRenderer);
             
             _yAnimation = new AnimateProperty();
             _yAnimation.addEventListener(EffectEvent.EFFECT_END, scrollAnimationEndHandler);
