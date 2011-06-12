@@ -651,23 +651,16 @@ package com.bschoenberg.components
         
         private function set $dataProvider(value:IList):void
         {
-            _oldVerticalScrollPosition = dataGroup.verticalScrollPosition;
-            super.dataProvider = value;
-            dataGroup.addEventListener(Event.RENDER,updateCompleteHandler);
-            dataGroup.invalidateProperties();
+            //this saves our current scroll position
+            var oldVerticalScrollPosition:Number = dataGroup.verticalScrollPosition;
+            super.dataProvider = dataSource.expandedItems;
+            
+            //redraw the component with the new items
             dataGroup.invalidateDisplayList();
-        }
-        
-        /**
-         * Called after the $dataProvider is updated to update the scroll position
-         */ 
-        private function updateCompleteHandler(e:Event):void
-        {
-            dataGroup.removeEventListener(Event.RENDER,updateCompleteHandler);
-            if(isNaN(_oldVerticalScrollPosition))
-                return;
-            dataGroup.verticalScrollPosition = _oldVerticalScrollPosition;
-            _oldVerticalScrollPosition = NaN;
+            dataGroup.validateNow();
+            
+            //reset the vertical scroll position
+            dataGroup.verticalScrollPosition = oldVerticalScrollPosition;
         }
     }
 }
