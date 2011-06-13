@@ -38,7 +38,6 @@ package com.bschoenberg.components
     import mx.collections.IList;
     import mx.core.ClassFactory;
     import mx.core.DragSource;
-    import mx.core.FlexGlobals;
     import mx.core.IFlexDisplayObject;
     import mx.core.UIComponent;
     import mx.core.mx_internal;
@@ -95,17 +94,17 @@ package com.bschoenberg.components
             _yAnimation = new AnimateProperty();
             _yAnimation.addEventListener(EffectEvent.EFFECT_END, scrollAnimationEndHandler);
             
-            //ours needs to come first to stop scrolling while dragging
-            addEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionStarting,false,int.MAX_VALUE);
         }
         
         /**
          * Stops drag scrolling while we are doing a drag operation
          */ 
-        private function touchInteractionStarting(e:TouchInteractionEvent):void
+        private function touchInteractionHandler(e:TouchInteractionEvent):void
         {
             if(DragManager.isDragging)
+            {
                 e.preventDefault();
+            }
         }
         
         /**
@@ -132,6 +131,8 @@ package com.bschoenberg.components
                 return;
             //ours must come first because list's will turn off our dragging
             e.renderer.addEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown,false,int.MAX_VALUE);
+            e.renderer.addEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionHandler,false,int.MAX_VALUE);
+            
         }
         
         /**
@@ -143,6 +144,7 @@ package com.bschoenberg.components
             if(!e.renderer)
                 return;
             e.renderer.removeEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown);
+            e.renderer.removeEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionHandler);
         }
         
         /**
@@ -432,7 +434,7 @@ package com.bschoenberg.components
          * @param animate Whether or not that scroll is animated
          */
         public function scroll(verticalScrollPosition:Number, 
-            animate:Boolean=true):void
+                               animate:Boolean=true):void
         {
             //if we aren't animated just set it and dispatch
             if(!animate)
