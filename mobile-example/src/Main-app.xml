@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<application xmlns="http://ns.adobe.com/air/application/2.5">
+<application xmlns="http://ns.adobe.com/air/application/2.6">
 
 <!-- Adobe AIR Application Descriptor File Template.
 
@@ -88,8 +88,9 @@
 		<!-- <maxSize></maxSize> -->
 	<autoOrients>true</autoOrients>
     <fullScreen>false</fullScreen>
-    <visible>false</visible>
-  </initialWindow>
+    <visible>true</visible>
+  <softKeyboardBehavior>none</softKeyboardBehavior>
+    </initialWindow>
 
 	<!-- We recommend omitting the supportedProfiles element, -->
 	<!-- which in turn permits your application to be deployed to all -->

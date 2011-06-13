@@ -106,12 +106,8 @@ THE SOFTWARE.
     </s:layout>
     
     <components:Tree id="tree" width="100%" height="100%" 
-        labelField="label"
-        dragEnabled="true" dropEnabled="true" dragMoveEnabled="true"
-        itemRenderer="com.bschoenberg.components.MobileTreeItemRenderer">
-        <components:layout>
-            <layouts:TreeLayout/>
-        </components:layout>
+        labelField="label" alternatingItemColors="[#FFFFFF]"
+        dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
     </components:Tree>
     
     <s:Group>

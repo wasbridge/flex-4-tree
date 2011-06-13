@@ -49,7 +49,6 @@ package com.bschoenberg.components
     import mx.managers.DragManager;
     
     import spark.components.List;
-    import spark.components.MobileApplication;
     import spark.events.RendererExistenceEvent;
     
     /**
@@ -122,44 +121,13 @@ package com.bschoenberg.components
         }
         
         /**
-         * @inheritDoc
-         */ 
-        protected override function partAdded(partName:String, instance:Object):void
-        {
-            super.partAdded(partName, instance);
-            
-            if (instance == dataGroup)
-            {
-                dataGroup.addEventListener(
-                    RendererExistenceEvent.RENDERER_ADD, dataGroup_rendererAddHandler);
-                dataGroup.addEventListener(
-                    RendererExistenceEvent.RENDERER_REMOVE, dataGroup_rendererRemoveHandler);
-            }
-        }
-        
-        /**
-         * @inheritDoc
-         */ 
-        override protected function partRemoved(partName:String, instance:Object):void
-        {
-            if (instance == dataGroup)
-            {
-                dataGroup.removeEventListener(
-                    RendererExistenceEvent.RENDERER_ADD, dataGroup_rendererAddHandler);
-                dataGroup.removeEventListener(
-                    RendererExistenceEvent.RENDERER_REMOVE, dataGroup_rendererRemoveHandler);
-            }
-            
-            super.partRemoved(partName, instance);
-        }
-        
-        /**
          * This handler allows us to hook into mouse down on item renderers.
          * 
          * Our handler must come first so that we can support dragging and drag scrolling
          */ 
-        private function dataGroup_rendererAddHandler(e:RendererExistenceEvent):void
+        protected override function dataGroup_rendererAddHandler(e:RendererExistenceEvent):void
         {
+            super.dataGroup_rendererAddHandler(e);
             if(!e.renderer)
                 return;
             //ours must come first because list's will turn off our dragging
@@ -169,8 +137,9 @@ package com.bschoenberg.components
         /**
          * This handler allows us to clean up after ourself
          */ 
-        private function dataGroup_rendererRemoveHandler(e:RendererExistenceEvent):void
+        protected override function dataGroup_rendererRemoveHandler(e:RendererExistenceEvent):void
         {
+            super.dataGroup_rendererRemoveHandler(e);
             if(!e.renderer)
                 return;
             e.renderer.removeEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown);

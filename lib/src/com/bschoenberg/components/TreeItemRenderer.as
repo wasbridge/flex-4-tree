@@ -25,10 +25,14 @@ package com.bschoenberg.components
     import com.bschoenberg.components.supportClasses.ITreeItem;
     import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
     
+    import flash.events.IEventDispatcher;
     import flash.events.MouseEvent;
+    import flash.ui.Multitouch;
+    import flash.ui.MultitouchInputMode;
     
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
+    import mx.core.InteractionMode;
     import mx.core.mx_internal;
     
     import spark.components.Label;
@@ -55,6 +59,8 @@ package com.bschoenberg.components
         {
             super.createChildren();
             
+            var touchMode:Boolean = getStyle("interactionMode") == InteractionMode.TOUCH;
+            
             expandButton = new ExpandButton();
             expandButton.addEventListener(MouseEvent.CLICK, expandButtonClickHandler);
             addElement(expandButton);
@@ -62,6 +68,12 @@ package com.bschoenberg.components
             labelDisplay = new Label();
             labelDisplay.styleParent = tree;
             addElement(labelDisplay);
+            
+            if(touchMode)
+            {
+                attachDragListeners(expandButton);
+                attachFixedListeners(labelDisplay);
+            }
         }
         
         protected override function commitProperties():void
@@ -103,6 +115,40 @@ package com.bschoenberg.components
         protected function addEventListeners():void
         {
             
+        }
+        
+        protected function dragMouseDown(e:MouseEvent):void
+        {
+            tree.dragEnabled = true;
+        }
+        
+        protected function dragMouseUp(e:MouseEvent):void
+        {
+            tree.dragEnabled = false;
+        }
+        
+        protected function fixedMouseDown(e:MouseEvent):void
+        {
+            //this stops drags inside of the input from dragging
+            //this item renderer;
+            e.preventDefault();
+            setSelected(true);
+        }
+        
+        protected function setSelected(value:Boolean):void
+        {
+            tree.mx_internal::setSelectedItem(item,value);
+        }
+        
+        protected function attachDragListeners(target:IEventDispatcher):void
+        {
+            target.addEventListener(MouseEvent.MOUSE_DOWN, dragMouseDown);
+            target.addEventListener(MouseEvent.MOUSE_UP, dragMouseUp);
+        }
+        
+        protected function attachFixedListeners(target:IEventDispatcher):void
+        {
+            target.addEventListener(MouseEvent.MOUSE_DOWN, fixedMouseDown);
         }
         
         protected function get tree():Tree 

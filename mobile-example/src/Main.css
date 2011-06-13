@@ -23,11 +23,9 @@ THE SOFTWARE.
 /* CSS file */
 @namespace s "library://ns.adobe.com/flex/spark";
 @namespace mx "library://ns.adobe.com/flex/mx";
-@namespace components "com.coordinate.components.*";
-@namespace renderers "renderers.*";
 
 
-s|MobileApplication
+s|ViewNavigatorApplication
 {
 }
     
