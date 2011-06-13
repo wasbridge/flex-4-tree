@@ -93,18 +93,6 @@ package com.bschoenberg.components
             
             _yAnimation = new AnimateProperty();
             _yAnimation.addEventListener(EffectEvent.EFFECT_END, scrollAnimationEndHandler);
-            
-        }
-        
-        /**
-         * Stops drag scrolling while we are doing a drag operation
-         */ 
-        private function touchInteractionHandler(e:TouchInteractionEvent):void
-        {
-            if(DragManager.isDragging)
-            {
-                e.preventDefault();
-            }
         }
         
         /**
@@ -130,9 +118,7 @@ package com.bschoenberg.components
             if(!e.renderer)
                 return;
             //ours must come first because list's will turn off our dragging
-            e.renderer.addEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown,false,int.MAX_VALUE);
-            e.renderer.addEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionHandler,false,int.MAX_VALUE);
-            
+            e.renderer.addEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown,false,int.MAX_VALUE);            
         }
         
         /**
@@ -144,7 +130,6 @@ package com.bschoenberg.components
             if(!e.renderer)
                 return;
             e.renderer.removeEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown);
-            e.renderer.removeEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionHandler);
         }
         
         /**
@@ -193,8 +178,7 @@ package com.bschoenberg.components
             
             var pt:Point = new Point(event.localX, event.localY);
             pt = DisplayObject(event.target).localToGlobal(pt);
-            
-            const DRAG_THRESHOLD:int = 5;
+            const DRAG_THRESHOLD:int = 10;
             
             //if we are outside of the drag threshold (a drag event has started)
             if (Math.abs(_mouseDownPoint.x - pt.x) > DRAG_THRESHOLD ||

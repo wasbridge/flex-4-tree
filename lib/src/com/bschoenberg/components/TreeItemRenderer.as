@@ -33,7 +33,10 @@ package com.bschoenberg.components
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
     import mx.core.InteractionMode;
+    import mx.core.UIComponent;
     import mx.core.mx_internal;
+    import mx.events.TouchInteractionEvent;
+    import mx.events.TouchInteractionReason;
     
     import spark.components.Label;
     import spark.components.supportClasses.ItemRenderer;
@@ -48,7 +51,7 @@ package com.bschoenberg.components
         
         private var _indent:Number;
         private var _itemChanged:Boolean;
-        
+                
         public function TreeItemRenderer()
         {
             super();
@@ -140,10 +143,17 @@ package com.bschoenberg.components
             tree.mx_internal::setSelectedItem(item,value);
         }
         
+        protected function touchInteractionStarting(e:TouchInteractionEvent):void
+        {
+            if(e.reason == TouchInteractionReason.SCROLL)
+                e.preventDefault();
+        }
+        
         protected function attachDragListeners(target:IEventDispatcher):void
         {
             target.addEventListener(MouseEvent.MOUSE_DOWN, dragMouseDown);
             target.addEventListener(MouseEvent.MOUSE_UP, dragMouseUp);
+            target.addEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionStarting);
         }
         
         protected function attachFixedListeners(target:IEventDispatcher):void
