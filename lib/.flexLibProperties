@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="true" version="3">
   <includeClasses/>
-  <includeResources>
-  </includeResources>
+  <includeResources/>
   <namespaceManifests/>
 </flexLibProperties>

@@ -38,7 +38,6 @@ package com.bschoenberg.components
     import mx.collections.IList;
     import mx.core.ClassFactory;
     import mx.core.DragSource;
-    import mx.core.FlexGlobals;
     import mx.core.IFlexDisplayObject;
     import mx.core.UIComponent;
     import mx.core.mx_internal;
@@ -49,9 +48,14 @@ package com.bschoenberg.components
     import mx.managers.DragManager;
     
     import spark.components.List;
-    import spark.components.MobileApplication;
     import spark.events.RendererExistenceEvent;
     
+    /**
+     * Flex 4 Spark Tree component.  It extends List.  
+     * Its item renderers must implement ITreeLayoutElement.  It does not use
+     * a dataProvider, but rather a dataSource which much implement the ITreeDataSource
+     * interface.  All items renderered by the Tree must be of type ITreeItem
+     */ 
     public class Tree extends List
     {
         private var _dataProviderChanged:Boolean;
@@ -72,9 +76,12 @@ package com.bschoenberg.components
         private var _oldVerticalScrollPosition:Number;
         private var _mouseDownPoint:Point;
         
-        [Event(name="nodeCollapsed", type="com.bschoenberg.components.events.TreeEvent")]
-        [Event(name="nodeExpanded", type="com.bschoenberg.components.events.TreeEvent")]
-        [Event(name="nodeInserted", type="com.bschoenberg.components.events.TreeEvent")]
+        /**
+         * Dispatched when the tree is done scrolling after a call to scroll()
+         *
+         * @eventType com.bschoenberg.components.events.TreeEvent.SCROLL_COMPLETE
+         */
+        [Event(name="scrollComplete", type="com.bschoenberg.components.events.TreeEvent")]
         
         public function Tree()
         {   
@@ -86,73 +93,62 @@ package com.bschoenberg.components
             
             _yAnimation = new AnimateProperty();
             _yAnimation.addEventListener(EffectEvent.EFFECT_END, scrollAnimationEndHandler);
-            
-            addEventListener(TouchInteractionEvent.TOUCH_INTERACTION_STARTING,touchInteractionStarting,false,int.MAX_VALUE);
         }
         
-        private function touchInteractionStarting(e:TouchInteractionEvent):void
-        {
-            if(DragManager.isDragging)
-                e.preventDefault();
-        }
-        
+        /**
+         * This methods figures out where to drop an item based on its dragevent
+         * 
+         * @param event The DragEvent to use to figure out where in the dataSource to drop the item
+         * 
+         * @return A TreeDropLocation describing where the item will be placed
+         */ 
         protected function calculateDropLocation(event:DragEvent):TreeDropLocation
         {
             return TreeLayout(layout).calculateTreeDropLocation(event);
         }
         
-        protected override function partAdded(partName:String, instance:Object):void
+        /**
+         * This handler allows us to hook into mouse down on item renderers.
+         * 
+         * Our handler must come first so that we can support dragging and drag scrolling
+         */ 
+        protected override function dataGroup_rendererAddHandler(e:RendererExistenceEvent):void
         {
-            super.partAdded(partName, instance);
-            
-            if (instance == dataGroup)
-            {
-                dataGroup.addEventListener(
-                    RendererExistenceEvent.RENDERER_ADD, dataGroup_rendererAddHandler);
-                dataGroup.addEventListener(
-                    RendererExistenceEvent.RENDERER_REMOVE, dataGroup_rendererRemoveHandler);
-            }
-        }
-        
-        override protected function partRemoved(partName:String, instance:Object):void
-        {
-            if (instance == dataGroup)
-            {
-                dataGroup.removeEventListener(
-                    RendererExistenceEvent.RENDERER_ADD, dataGroup_rendererAddHandler);
-                dataGroup.removeEventListener(
-                    RendererExistenceEvent.RENDERER_REMOVE, dataGroup_rendererRemoveHandler);
-            }
-            
-            super.partRemoved(partName, instance);
-        }
-        
-        private function dataGroup_rendererAddHandler(e:RendererExistenceEvent):void
-        {
+            super.dataGroup_rendererAddHandler(e);
             if(!e.renderer)
                 return;
             //ours must come first because list's will turn off our dragging
-            e.renderer.addEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown,false,int.MAX_VALUE);
+            e.renderer.addEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown,false,int.MAX_VALUE);            
         }
         
-        private function dataGroup_rendererRemoveHandler(e:RendererExistenceEvent):void
+        /**
+         * This handler allows us to clean up after ourself
+         */ 
+        protected override function dataGroup_rendererRemoveHandler(e:RendererExistenceEvent):void
         {
+            super.dataGroup_rendererRemoveHandler(e);
             if(!e.renderer)
                 return;
             e.renderer.removeEventListener(MouseEvent.MOUSE_DOWN,rendererMouseDown);
         }
         
+        /**
+         * Track and hold mouse down positions from the item renderers
+         */ 
         private function rendererMouseDown(event:MouseEvent):void
         {
+            //if the renderer has told us to stop, stop
             if (event.isDefaultPrevented())
                 return;
             
+            //if we are dragging stop our parents from reacting
             if(DragManager.isDragging)
             {
                 event.preventDefault();
                 return;
             }
             
+            //get the renderer and listen for drags or releases
             var renderer:ITreeLayoutElement = ITreeLayoutElement(event.currentTarget);
             renderer.addEventListener(MouseEvent.MOUSE_MOVE,rendererMouseMove,false,int.MAX_VALUE,true);
             renderer.addEventListener(MouseEvent.MOUSE_UP,rendererMouseUp,false,0,true);
@@ -160,14 +156,20 @@ package com.bschoenberg.components
             _mouseDownPoint = event.target.localToGlobal(new Point(event.localX, event.localY));
         }
         
+        /**
+         * Handle dragging of the renderer
+         */ 
         private function rendererMouseMove(event:MouseEvent):void
         {   
+            //if we don't have a start point or dragging is not enabled
             if (!_mouseDownPoint || !dragEnabled)
                 return;
             
+            //f we have been told to stop, stop
             if (event.isDefaultPrevented())
                 return;
             
+            //if we are dragging stop and tell our parents to stop
             if(DragManager.isDragging)
             {
                 event.preventDefault();
@@ -176,9 +178,9 @@ package com.bschoenberg.components
             
             var pt:Point = new Point(event.localX, event.localY);
             pt = DisplayObject(event.target).localToGlobal(pt);
+            const DRAG_THRESHOLD:int = 10;
             
-            const DRAG_THRESHOLD:int = 5;
-            
+            //if we are outside of the drag threshold (a drag event has started)
             if (Math.abs(_mouseDownPoint.x - pt.x) > DRAG_THRESHOLD ||
                 Math.abs(_mouseDownPoint.y - pt.y) > DRAG_THRESHOLD)
             {
@@ -186,7 +188,7 @@ package com.bschoenberg.components
                 //because the silly flex developers do not check if the 
                 //event is prevent defaulted
                 mx_internal::mouseDownPoint = null;
-                    
+                
                 var dragEvent:DragEvent = new DragEvent(DragEvent.DRAG_START);
                 dragEvent.dragInitiator = this;
                 dragEvent.draggedItem = event.currentTarget;
@@ -207,6 +209,9 @@ package com.bschoenberg.components
             }
         }
         
+        /**
+         * Clean up our event handlers on the renderer
+         */ 
         private function rendererMouseUp(e:MouseEvent):void
         {
             var renderer:ITreeLayoutElement = ITreeLayoutElement(e.currentTarget);
@@ -214,8 +219,12 @@ package com.bschoenberg.components
             renderer.removeEventListener(MouseEvent.MOUSE_UP,rendererMouseUp);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public override function createDragIndicator():IFlexDisplayObject
         {
+            //make a new item renderer for dragging
             var di:UIComponent = dataGroup.itemRenderer.newInstance();
             di.width = width * .75;
             di.height = TreeLayout(layout).rowHeight;
@@ -226,6 +235,9 @@ package com.bschoenberg.components
             return IFlexDisplayObject(di);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function dragStartHandler(event:DragEvent):void
         {
             if(event.draggedItem == null)
@@ -243,9 +255,13 @@ package com.bschoenberg.components
             var xOffset:Number = -mouseX + 12;
             var yOffset:Number = -mouseY + di.height/2;
             
+            //do the drag using the drag indicator
             DragManager.doDrag(this,ds,event,di,xOffset,yOffset,1); 
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function dragEnterHandler(event:DragEvent):void
         {
             if(event.dragInitiator ==  this && !dragMoveEnabled)
@@ -257,6 +273,9 @@ package com.bschoenberg.components
             DragManager.acceptDragDrop(this);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function dragOverHandler(event:DragEvent):void
         {
             if (event.isDefaultPrevented())
@@ -271,6 +290,9 @@ package com.bschoenberg.components
             TreeLayout(layout).showTreeDropIndicator(dropLocation);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function dragExitHandler(event:DragEvent):void
         {
             if (event.isDefaultPrevented())
@@ -286,6 +308,9 @@ package com.bschoenberg.components
             destroyDropIndicator();
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function dragDropHandler(event:DragEvent):void
         {
             if(event.dragInitiator ==  this && !dragMoveEnabled)
@@ -294,6 +319,7 @@ package com.bschoenberg.components
             var itemToAdd:ITreeItem = ITreeItem(event.dragSource.dataForFormat("tree-item"));
             
             var dl:TreeDropLocation = TreeLayout(layout).calculateTreeDropLocation(event);
+            //new top level item
             if(dl.parentDropIndex == -1)
             {
                 if(_dataSource == null)
@@ -301,6 +327,7 @@ package com.bschoenberg.components
                 if(dl.dropIndex > dataSource.items.length)
                     dl.dropIndex = dataSource.items.length;
                 
+                //if we are the initiator do a move, otherwise an add
                 if(event.dragInitiator == this)
                     dataSource.moveItem(itemToAdd,dl.dropIndex);
                 else
@@ -318,6 +345,7 @@ package com.bschoenberg.components
                     itemToAdd.hasDescendant(parentItem))
                     return;
                 
+                //move if we are the initiator
                 if(event.dragInitiator == this)
                     dataSource.moveItem(itemToAdd,dl.dropIndex,parentItem);
                 else
@@ -325,11 +353,17 @@ package com.bschoenberg.components
             }
             
             //since we are scolling ourself here, just do the update
-            //manager the scroll locations
+            //manage the scroll locations
+            
+            //this saves our current scroll position
             var oldVerticalScrollPosition:Number = dataGroup.verticalScrollPosition;
             super.dataProvider = dataSource.expandedItems;
+            
+            //redraw the component with the new items
             dataGroup.invalidateDisplayList();
             dataGroup.validateNow();
+            
+            //reset the vertical scroll position
             dataGroup.verticalScrollPosition = oldVerticalScrollPosition;
             _dataProviderChanged = false;
             
@@ -343,36 +377,50 @@ package com.bschoenberg.components
             //that looks like garbage
             if(scrollY - rowHeight <=0)
                 return;
+            
             scroll(scrollY);
         }
         
+        /**
+         * Called when a node has been inserted. From the dataSource
+         */ 
         protected function nodeInsertedHandler(e:TreeEvent):void
         {
             _nodeInserted = true;
             _insertedNode = e.node;
-            //trace("INSERTED: " + Object(_insertedNode).id);
             invalidateProperties();
         }
         
+        /**
+         * Called when a node has been expanded. From the dataSource
+         */ 
         protected function nodeExpandedHandler(e:TreeEvent):void
         {
             _nodeExpanded = true;
             _expandNode = e.node;
-            //trace("EXPANDED: " + Object(_expandNode).id);
             invalidateProperties();
         }
         
+        /**
+         * Called when a node has been collasped. From the dataSource
+         */
         protected function nodeCollapsedHandler(e:TreeEvent):void
         {
             _nodeCollapsed = true;
             _collapseNode = e.node;
-            //trace("COLLAPSED: " + Object(_expandNode).id);
             invalidateProperties();
         }
         
+        /**
+         * Scroll the tree and dispatch a SCROLL_COMPLETE when done
+         * 
+         * @param verticalScrollPosition The location to scroll to
+         * @param animate Whether or not that scroll is animated
+         */
         public function scroll(verticalScrollPosition:Number, 
                                animate:Boolean=true):void
         {
+            //if we aren't animated just set it and dispatch
             if(!animate)
             {
                 dataGroup.verticalScrollPosition = verticalScrollPosition;
@@ -391,11 +439,17 @@ package com.bschoenberg.components
             _yAnimation.play();
         }
         
+        /**
+         * Update the UI as we scroll
+         */ 
         private function scrollEffectHandler(e:Event):void
         {
             skin.invalidateDisplayList();
         }
         
+        /**
+         * Dispatch the scroll complete handler when the scroll animation is complete
+         */
         private function scrollAnimationEndHandler(e:EffectEvent):void
         {
             //we get this listener called twice which means we execute its handler too many
@@ -403,6 +457,11 @@ package com.bschoenberg.components
             dispatchEvent(new TreeEvent(TreeEvent.SCROLL_COMPLETE,null,null,false));
         }
         
+        /**
+         * Searches for the given ITreeItem ItemRenderer
+         * 
+         * @param item The item to find the ItemRenderer for
+         */ 
         public function getTreeLayoutElement(item:ITreeItem):ITreeLayoutElement
         {
             var element:ITreeLayoutElement;
@@ -416,12 +475,16 @@ package com.bschoenberg.components
             return null;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         protected override function commitProperties():void
         {
             super.commitProperties();
             
             var tLayout:TreeLayout = TreeLayout(layout);
             
+            //if we have just changed the data provider do the update
             if(_dataProviderChanged && 
                 !_nodeCollapsed &&
                 !_nodeExpanded)
@@ -429,6 +492,7 @@ package com.bschoenberg.components
                 updateDataProvider();
             }
             
+            //if we have something that opened and closed just update
             if(_nodeCollapsed && _nodeExpanded)
             {
                 _nodeExpanded = false;
@@ -468,8 +532,12 @@ package com.bschoenberg.components
             }
         }
         
+        /**
+         * This function updates the List dataProvider with the expanded items
+         */ 
         private function updateDataProvider():void
         {
+            //don't update if nothing changed
             if($dataProvider != _dataSource.expandedItems)
             {
                 dataGroup.invalidateDisplayList();
@@ -479,25 +547,37 @@ package com.bschoenberg.components
             _dataProviderChanged = false;
         }
         
+        /**
+         * You cannot set this value, it is controlled internally by the tree
+         */ 
         public override function set dataProvider(value:IList):void
         {  
-            throw new Error("No set data provider");
+            throw new Error("Can't set the data provider");
         }
         
+        /**
+         * The data source for the tree which controls how the tree looks and when it animated
+         */ 
         [Bindable]
         public function get dataSource():ITreeDataSource
         {
             return _dataSource;
         }
         
-        private function purgeEventListeners():void
+        /**
+         * Cleans up all event listeners added onto the data source before it is set to something new
+         */ 
+        protected function removeEventListeners():void
         {
             dataSource.removeEventListener(TreeEvent.NODE_INSERTED,nodeInsertedHandler);
             dataSource.removeEventListener(TreeEvent.NODE_EXPANDED, nodeExpandedHandler);
             dataSource.removeEventListener(TreeEvent.NODE_COLLAPSED, nodeCollapsedHandler);
         }
         
-        private function addEventListeners():void
+        /**
+         * Adds all the event listeners needed to the data source to control the tree
+         */ 
+        protected function addEventListeners():void
         {
             dataSource.addEventListener(TreeEvent.NODE_INSERTED,nodeInsertedHandler);
             dataSource.addEventListener(TreeEvent.NODE_EXPANDED, nodeExpandedHandler);
@@ -507,7 +587,7 @@ package com.bschoenberg.components
         public function set dataSource(value:ITreeDataSource):void
         {
             if(_dataSource)
-                purgeEventListeners();
+                removeEventListeners();
             _dataSource = value;
             if(_dataSource)
                 addEventListeners();
@@ -516,12 +596,9 @@ package com.bschoenberg.components
             invalidateProperties();
         }
         
-        private function dataSourceChangeHandler(e:Event):void
-        {
-            _dataProviderChanged = true;
-            invalidateProperties();
-        }
-        
+        /**
+         * Reference to the List dataProvider
+         */
         private function get $dataProvider():IList 
         {
             return super.dataProvider;
@@ -529,20 +606,16 @@ package com.bschoenberg.components
         
         private function set $dataProvider(value:IList):void
         {
-            _oldVerticalScrollPosition = dataGroup.verticalScrollPosition;
-            super.dataProvider = value;
-            dataGroup.addEventListener(Event.RENDER,updateCompleteHandler);
-            dataGroup.invalidateProperties();
+            //this saves our current scroll position
+            var oldVerticalScrollPosition:Number = dataGroup.verticalScrollPosition;
+            super.dataProvider = dataSource.expandedItems;
+            
+            //redraw the component with the new items
             dataGroup.invalidateDisplayList();
-        }
-        
-        private function updateCompleteHandler(e:Event):void
-        {
-            dataGroup.removeEventListener(Event.RENDER,updateCompleteHandler);
-            if(isNaN(_oldVerticalScrollPosition))
-                return;
-            dataGroup.verticalScrollPosition = _oldVerticalScrollPosition;
-            _oldVerticalScrollPosition = NaN;
+            dataGroup.validateNow();
+            
+            //reset the vertical scroll position
+            dataGroup.verticalScrollPosition = oldVerticalScrollPosition;
         }
     }
 }

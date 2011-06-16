@@ -109,7 +109,7 @@ THE SOFTWARE.
         labelField="label"
         dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
         <components:layout>
-            <layouts:TreeLayout rowHeight="30"/>
+            <layouts:TreeLayout rowHeight="30" indent="15"/>
         </components:layout>
     </components:Tree>
     

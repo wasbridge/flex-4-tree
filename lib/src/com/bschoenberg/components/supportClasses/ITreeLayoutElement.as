@@ -27,14 +27,29 @@ package com.bschoenberg.components.supportClasses
     
     import spark.components.IItemRenderer;
     
+    /**
+     * This interface is an extension of IItemRenderer used by the TreeLayout to layout elements in a tree like fashion
+     */ 
     public interface ITreeLayoutElement extends ILayoutElement, IItemRenderer
     {
+        /**
+         * How deep the item is in the hierarchy
+         */ 
         function get indentLevel():int;
         
+        /**
+         * How many pixels in this item should be
+         */ 
         function set indent(value:Number):void;
         
+        /**
+         * The owning element of this element
+         */ 
         function get parentElement():ITreeLayoutElement;
+        
+        /**
+         * The direct descendents of this elements (as ITreeLayoutElements)
+         */ 
         function get childElements():IList;
-            
     }
 }

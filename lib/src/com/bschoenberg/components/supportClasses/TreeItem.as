@@ -30,29 +30,75 @@ package com.bschoenberg.components.supportClasses
     
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
-    import mx.events.FlexEvent;
     
+    /**
+     * Dispatched when a child item is added
+     *
+     * @eventType com.bschoenberg.components.events.TreeDataEvent.ADD
+     */ 
+    [Event(name="add", type="com.bschoenberg.components.events.TreeDataEvent")]
+    
+    /**
+     * Dispatched when a child item is removed
+     *
+     * @eventType com.bschoenberg.components.events.TreeDataEvent.REMOVE
+     */ 
+    [Event(name="remove", type="com.bschoenberg.components.events.TreeDataEvent")]
+    
+    /**
+     * Dispatched when the expanded property is set to true. This will animate an expansion
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_EXPANDED
+     */
     [Event(name="nodeExpanded", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when a child item is added. This will animate an insertion
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_INSERTED
+     */
     [Event(name="nodeInserted", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when the expanded property is set to false. This will animate a closure
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_COLLAPSED
+     */
     [Event(name="nodeCollapsed", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when an item is removed. This will animate a removal
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_REMOVED
+     */
     [Event(name="nodeRemoved", type="com.bschoenberg.components.events.TreeEvent")]
-
+    
+    /**
+     * This class is the main implementor of ITreeItem.  It is the item that will be passed to the TreeItemRenderer
+     * It is dynamic so that you may add any arbitrary data to it to be displayed by the tree.
+     */ 
     public dynamic class TreeItem extends EventDispatcher implements ITreeItem
     {
         private var _expanded:Boolean;
         private var _parent:ITreeItem;
         private var _children:IList;
-
+        
         public function TreeItem()
         {
             _children = new ArrayCollection();
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function getItemAt(index:int):ITreeItem
         {
             return _children.getItemAt(index) as ITreeItem;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function hasDescendant(item:ITreeItem):Boolean
         {
             for each(var child:ITreeItem in _children)
@@ -67,6 +113,9 @@ package com.bschoenberg.components.supportClasses
             return false;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function addItem(item:ITreeItem,dispatchTreeEvent:Boolean=true):void
         {
             addEventListeners(item);
@@ -79,7 +128,9 @@ package com.bschoenberg.components.supportClasses
             dispatchEvent(new TreeDataEvent(TreeDataEvent.ADD,item,this));
         }
         
-        
+        /**
+         * @inheritDoc
+         */ 
         public function addItemAt(item:ITreeItem, index:int,dispatchTreeEvent:Boolean=true):void
         {
             if(index < 0)
@@ -98,6 +149,9 @@ package com.bschoenberg.components.supportClasses
             dispatchEvent(new TreeDataEvent(TreeDataEvent.ADD,item,this));
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function removeItem(item:ITreeItem,dispatchTreeEvent:Boolean=true):ITreeItem
         {
             var retVal:ITreeItem;
@@ -130,6 +184,9 @@ package com.bschoenberg.components.supportClasses
             return retVal;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function setParent(item:ITreeItem):void
         {
             if(item == this)
@@ -141,6 +198,9 @@ package com.bschoenberg.components.supportClasses
             _parent = item;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function getAllExpandedItems():IList
         {
             var retVal:ArrayCollection = new ArrayCollection();
@@ -155,6 +215,9 @@ package com.bschoenberg.components.supportClasses
             return retVal;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function getAllItems():IList
         {
             var retVal:ArrayCollection = new ArrayCollection();
@@ -167,6 +230,9 @@ package com.bschoenberg.components.supportClasses
             return retVal;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function expandRecursive():void
         {
             expanded = true;
@@ -176,6 +242,13 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * This method is used to remove listeners added to an item.
+         * This method is called when items are being removed from the tree
+         * or when events do not need to be listened to.
+         * 
+         * @param item The item to remove the event listeners from
+         */ 
         protected function removeEventListeners(item:ITreeItem):void
         {
             item.removeEventListener(TreeDataEvent.ADD, handler);
@@ -187,6 +260,12 @@ package com.bschoenberg.components.supportClasses
             item.removeEventListener(TreeEvent.NODE_REMOVED, handler);
         }
         
+        /**
+         * This method is used to add listeners added to an item.
+         * This method is called when items are being added to the tree
+         * 
+         * @param item The item to add the event listeners to
+         */ 
         protected function addEventListeners(item:ITreeItem):void
         {
             item.addEventListener(TreeDataEvent.ADD, handler);
@@ -198,11 +277,17 @@ package com.bschoenberg.components.supportClasses
             item.addEventListener(TreeEvent.NODE_REMOVED, handler);
         }
         
+        /**
+         * Default handler for all Tree and TreeDataEvents
+         */ 
         protected function handler(e:Event):void
         {
             dispatchEvent(e);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get indentLevel():int
         {
             if(parent)
@@ -211,6 +296,9 @@ package com.bschoenberg.components.supportClasses
             return 0;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         [Bindable]
         public function get expanded():Boolean { return _expanded; }
         public function set expanded(value:Boolean):void 
@@ -226,8 +314,14 @@ package com.bschoenberg.components.supportClasses
                 dispatchEvent(new TreeEvent(TreeEvent.NODE_COLLAPSED,this,parent));
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get parent():ITreeItem { return _parent; }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get items():IList { return _children; }
         public function set items(value:IList):void
         {

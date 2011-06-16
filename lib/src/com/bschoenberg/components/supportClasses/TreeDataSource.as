@@ -31,16 +31,59 @@ package com.bschoenberg.components.supportClasses
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
     
+    /**
+     * Dispatched when a child item is added
+     *
+     * @eventType com.bschoenberg.components.events.TreeDataEvent.ADD
+     */ 
     [Event(name="add", type="com.bschoenberg.components.events.TreeDataEvent")]
+    
+    /**
+     * Dispatched when a child item is removed
+     *
+     * @eventType com.bschoenberg.components.events.TreeDataEvent.REMOVE
+     */ 
     [Event(name="remove", type="com.bschoenberg.components.events.TreeDataEvent")]
+    
+    /**
+     * Dispatched when a child item is moved
+     *
+     * @eventType com.bschoenberg.components.events.TreeDataEvent.MOVE
+     */ 
     [Event(name="move", type="com.bschoenberg.components.events.TreeDataEvent")]
     
-    
+    /**
+     * Dispatched when the expanded property is set to true. This will animate an expansion
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_EXPANDED
+     */
     [Event(name="nodeExpanded", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when a child item is added. This will animate an insertion
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_INSERTED
+     */
     [Event(name="nodeInserted", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when the expanded property is set to false. This will animate a closure
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_COLLAPSED
+     */
     [Event(name="nodeCollapsed", type="com.bschoenberg.components.events.TreeEvent")]
+    
+    /**
+     * Dispatched when an item is removed. This will animate a removal
+     *
+     * @eventType com.bschoenberg.components.events.TreeEvent.NODE_REMOVED
+     */
     [Event(name="nodeRemoved", type="com.bschoenberg.components.events.TreeEvent")]
-
+    
+    /**
+     * This is the default ITreeDataSource implementor.  It implements the tree data structure for the Tree.
+     * 
+     */ 
     public class TreeDataSource extends EventDispatcher implements ITreeDataSource
     {
         private var _items:IList;
@@ -53,6 +96,13 @@ package com.bschoenberg.components.supportClasses
             _items = new ArrayCollection();
         }
         
+        /**
+         * This method is used to remove listeners added to an item.
+         * This method is called when items are being removed from the tree
+         * or when events do not need to be listened to.
+         * 
+         * @param item The item to remove the event listeners from
+         */ 
         protected function removeEventListeners(item:ITreeItem):void
         {
             item.removeEventListener(TreeDataEvent.ADD, handler);
@@ -64,6 +114,12 @@ package com.bschoenberg.components.supportClasses
             item.removeEventListener(TreeEvent.NODE_REMOVED, handler);
         }
         
+        /**
+         * This method is used to add listeners to an item.
+         * This method is called when items are being added to the tree
+         *  
+         * @param item The item to add the event listeners to
+         */ 
         protected function addEventListeners(item:ITreeItem):void
         {
             item.addEventListener(TreeDataEvent.ADD, handler);
@@ -75,6 +131,9 @@ package com.bschoenberg.components.supportClasses
             item.addEventListener(TreeEvent.NODE_REMOVED, handler);
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function addItem(item:ITreeItem,parent:ITreeItem=null,dispatchTreeEvent:Boolean=true):void
         {
             if(item == null)
@@ -99,6 +158,9 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function addItemAt(item:ITreeItem, index:int, parent:ITreeItem=null,dispatchTreeEvent:Boolean=true):void
         {
             if(item == null)
@@ -124,6 +186,9 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function removeItem(item:ITreeItem,dispatchTreeEvent:Boolean=true):ITreeItem
         {
             clearCaches();
@@ -157,6 +222,12 @@ package com.bschoenberg.components.supportClasses
             return null;
         }
         
+        /**
+         * This method silently removes an item from the data structure.  It makes sure that no events are dispatched.
+         * This method is used by the move method
+         * 
+         * @param item The item to remove
+         */ 
         protected function silentRemove(item:ITreeItem):void
         {
             var index:int = _items.getItemIndex(item);
@@ -180,6 +251,14 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * This method silently adds an item to the data structure.  It makes sure that no events are dispatched.
+         * This method is used by the move method
+         * 
+         * @param item The item to add
+         * @param index The index to add the item at
+         * @param parent The item to add the item to
+         */ 
         protected function silentAdd(item:ITreeItem,index:int,parent:ITreeItem):void
         {
             if(!parent)
@@ -196,6 +275,9 @@ package com.bschoenberg.components.supportClasses
             }
         } 
         
+        /**
+         * @inheritDoc
+         */ 
         public function moveItem(item:ITreeItem,index:int,parentItem:ITreeItem=null):void
         {
             if(item == null)
@@ -214,18 +296,27 @@ package com.bschoenberg.components.supportClasses
             dispatchEvent(new TreeDataEvent(TreeDataEvent.MOVE,item,parentItem,oldParent,index));
         }
         
+        /**
+         * The default event handler.  It redispatches all child events and clears any caches
+         */ 
         private function handler(e:Event):void
         {
             clearCaches();
             dispatchEvent(e);
         }
         
+        /**
+         * Clears cached data
+         */ 
         private function clearCaches():void
         {
             _allItems = null;
             _expandedItems = null;
         }
         
+        /**
+         * Generates cached versions of allItems and expandedItems
+         */ 
         private function generateCaches():void
         {
             _allItems = new ArrayCollection();
@@ -246,11 +337,17 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get items():IList 
         { 
             return _items; 
         }
         
+        /**
+         * @private
+         */ 
         public function set items(value:IList):void
         {
             var item:ITreeItem;
@@ -265,6 +362,9 @@ package com.bschoenberg.components.supportClasses
             }
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get allItems():IList
         {
             if(_allItems == null ||
@@ -273,6 +373,9 @@ package com.bschoenberg.components.supportClasses
             return _allItems;
         }
         
+        /**
+         * @inheritDoc
+         */ 
         public function get expandedItems():IList
         {
             if(_expandedItems == null ||
