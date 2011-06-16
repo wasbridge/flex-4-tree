@@ -108,7 +108,7 @@ THE SOFTWARE.
     <components:Tree id="tree" width="100%" height="100%" 
         labelField="label"
         dragEnabled="true" dropEnabled="true" dragMoveEnabled="true"
-        itemRenderer="com.bschoenberg.components.MobileTreeItemRenderer">
+        itemRenderer="com.bschoenberg.components.BaseMobileTreeItemRenderer">
         <components:layout>
             <layouts:TreeLayout/>
         </components:layout>
