@@ -44,7 +44,6 @@ package com.bschoenberg.components
     import mx.effects.AnimateProperty;
     import mx.events.DragEvent;
     import mx.events.EffectEvent;
-    import mx.events.TouchInteractionEvent;
     import mx.managers.DragManager;
     
     import spark.components.List;
@@ -291,7 +290,7 @@ package com.bschoenberg.components
         {
             if (event.isDefaultPrevented())
                 return;
-
+            
             var dropLocation:DropLocation = layout.calculateDropLocation(event);
             if (dropLocation)
             {
@@ -353,7 +352,8 @@ package com.bschoenberg.components
                 //if we are the initiator do a move, otherwise an add
                 if(event.dragInitiator == this)
                 {
-                    if(itemToAdd == dataSource.items[dl.dropIndex])
+                    if(dl.dropIndex < dataSource.items.length &&
+                        itemToAdd == dataSource.items.getItemAt(dl.dropIndex))
                         return;
                     
                     dataSource.moveItem(itemToAdd,dl.dropIndex);

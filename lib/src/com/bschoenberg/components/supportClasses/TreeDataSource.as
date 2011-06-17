@@ -290,6 +290,20 @@ package com.bschoenberg.components.supportClasses
             
             var oldParent:ITreeItem = item.parent;
             
+            //do we have to modify the index?
+            if(oldParent == parentItem)
+            {
+                var oldIndex:int = 0;
+                if(parentItem)
+                    oldIndex = parentItem.items.getItemIndex(item);
+                else
+                    oldIndex = items.getItemIndex(item);
+                
+                if(oldIndex <= index)
+                    index--;
+            }
+                
+            
             silentRemove(item);
             silentAdd(item,index,parentItem);
             
