@@ -76,7 +76,7 @@ package com.bschoenberg.components.layouts
         
         private var _masks:Dictionary;
         
-        private var _verticalScrollAfterLayout:Number = 0;        
+        private var _addtDistVScrollAfterLayout:Number = 0;        
         private var _layoutCompleteFunction:Function;
         
         private var _paddingTop:Number = 0;
@@ -497,7 +497,7 @@ package com.bschoenberg.components.layouts
         
         private function layoutCompleted():void
         {
-            verticalScrollPosition += _verticalScrollAfterLayout;
+            verticalScrollPosition += _addtDistVScrollAfterLayout;
             if(_layoutCompleteFunction != null)
                 _layoutCompleteFunction();
             
@@ -573,18 +573,18 @@ package com.bschoenberg.components.layouts
             if(animationType == COLLAPSING_DOWN)
             {
                 regenerateEffects(true);
-                _verticalScrollAfterLayout = -calcSlideDownHeight().down;
+                _addtDistVScrollAfterLayout = -calcSlideDownHeight().down;
                 willSlide = parameterizeSlideDownEffect();
             }
             else if(animationType == NONE)
             {
                 willSlide = false;
-                _verticalScrollAfterLayout = 0;
+                _addtDistVScrollAfterLayout = 0;
             }
             else
             {
                 regenerateEffects(false);
-                _verticalScrollAfterLayout = 0;
+                _addtDistVScrollAfterLayout = 0;
                 willSlide = parameterizeSlideUpEffect(animationType);
             }
             
