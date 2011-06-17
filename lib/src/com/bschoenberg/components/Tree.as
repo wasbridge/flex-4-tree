@@ -291,7 +291,7 @@ package com.bschoenberg.components
         {
             if (event.isDefaultPrevented())
                 return;
-            
+
             var dropLocation:DropLocation = layout.calculateDropLocation(event);
             if (dropLocation)
             {
@@ -365,12 +365,13 @@ package com.bschoenberg.components
             }
             else
             {
-                var dropRenderer:ITreeLayoutElement = ITreeLayoutElement(dataGroup.getElementAt(dl.parentDropIndex));
-                var parentItem:ITreeItem = ITreeItem(dropRenderer.data);
+                var parentRenderer:ITreeLayoutElement = 
+                    ITreeLayoutElement(dataGroup.getElementAt(dl.parentDropIndex));
+                var parentItem:ITreeItem = ITreeItem(parentRenderer.data);
                 parentItem.expanded = true;
                 if(dl.dropIndex > parentItem.items.length)
                     dl.dropIndex = dataSource.items.length;
-                                
+                
                 //move if we are the initiator
                 if(event.dragInitiator == this)
                 {
