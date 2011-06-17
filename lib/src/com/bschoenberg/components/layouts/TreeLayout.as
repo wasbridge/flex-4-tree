@@ -400,9 +400,11 @@ package com.bschoenberg.components.layouts
         
         public function calculateTreeDropLocation(dragEvent:DragEvent):TreeDropLocation
         {
-            var retVal:TreeDropLocation = calculateTreeDropIndicies(dragEvent.stageX,dragEvent.stageY);
+            var p:Point = new Point(dragEvent.stageX,dragEvent.stageY);
+            p = target.globalToLocal(p);
+            var retVal:TreeDropLocation = calculateTreeDropIndicies(p.x,p.y);
             retVal.dragEvent = dragEvent;
-            retVal.dropPoint = target.globalToLocal(new Point(dragEvent.stageX,dragEvent.stageY));
+            retVal.dropPoint = p;
             return retVal;
         }
         
