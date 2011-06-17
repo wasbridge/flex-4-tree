@@ -31,6 +31,7 @@ package com.bschoenberg.components.layouts
     import flash.events.TimerEvent;
     import flash.geom.Point;
     import flash.geom.Rectangle;
+    import flash.system.System;
     import flash.utils.Dictionary;
     import flash.utils.Timer;
     
@@ -176,11 +177,11 @@ package com.bschoenberg.components.layouts
             
             _dragScrollDelta = calculateDragScrollDelta(dropLocation,
                 dragScrollElapsedTime);
+            
             if (_dragScrollDelta)
             {
                 // Update the drag-scroll event
                 _dragScrollEvent = dropLocation.dragEvent;
-                
                 if (!dragScrollingInProgress())
                 {
                     // Creates a timer, immediately updates the scroll position
@@ -229,28 +230,33 @@ package com.bschoenberg.components.layouts
                 dropIndicator.visible = false;
         }
         
+        public override function calculateDropLocation(dragEvent:DragEvent):DropLocation
+        {
+            // Find the drop index
+            var dropPoint:Point = target.globalToLocal(new Point(dragEvent.stageX, dragEvent.stageY));
+            var dropIndex:int = calculateDropIndex(dropPoint.x, dropPoint.y);
+            if (dropIndex == -1)
+                return null;
+            
+            // Create and fill the drop location info
+            var dropLocation:DropLocation = new DropLocation();
+            dropLocation.dragEvent = dragEvent;
+            dropLocation.dropPoint = dropPoint;
+            dropLocation.dropIndex = dropIndex;
+            return dropLocation;
+        }
+        
         /**
          * @inherit
          */
         protected override function calculateDropIndex(x:Number, y:Number):int
         {
-            var tdl:TreeDropLocation = calculateTreeDropIndicies(x,y);
-            if(tdl.parentDropIndex == -1)
-                return tdl.dropIndex;
-            
-            // Iterate over the visible elements
-            var layoutTarget:GroupBase = target;
-            var count:int = layoutTarget.numElements;
-            
+            // Iterate over the visible elements            
             // If there are no items, insert at index 0
-            if (count == 0 || y <= 0)
-            {
+            if (target.numElements == 0 || y <= 0)
                 return 0;
-            }
             
             // Go through the visible elements
-            var minDistance:Number = Number.MAX_VALUE;
-            var bestIndex:int = -1;
             var start:int = 0;//this.firstIndexInView;
             var end:int = target.numElements;//this.lastIndexInView;
             
@@ -269,32 +275,37 @@ package com.bschoenberg.components.layouts
                 //in the middle 50%
                 if (elementBounds.top <= y && y <= elementBounds.bottom)
                 {
-                    var lowerBound:Number = elementBounds.y + elementBounds.height / 4;
-                    var upperBound:Number = elementBounds.y + (3 * elementBounds.height / 4);
+                    var pct0:Number = elementBounds.y;
+                    var pct25:Number = elementBounds.y + elementBounds.height / 4;
+                    var pct75:Number = elementBounds.y + (3 * elementBounds.height / 4);
+                    var pct100:Number = elementBounds.y + elementBounds.height;
                     
                     // we are in the middle 50%
-                    if(y > lowerBound && y < upperBound)
+                    if(y >= pct25 && y < pct75)
                     {
                         //return the new parent elements index + 1
-                        return i + 1;
+                        return Math.min(i + 1, target.numElements - 1);
                     }
                         //we are in the top 25%, we will be dropping on top
-                    else if (y > elementBounds.y && y < lowerBound)
+                    else if (y >= pct0 && y < pct25)
                     {
-                        return i - 1;
+                        return i;
                     }
                         //we are in the bottom 25% we will be dropping below this elements open children
-                    else if(y > upperBound && y < elementBounds.y + elementBounds.height)
+                    else if(y >= pct75 && y < pct100)
                     {
-                        var expandedChildren:IList = element.expandedChildren;
-                        var lastOpenElement:ITreeLayoutElement = 
-                            ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
-                        return target.getElementIndex(lastOpenElement) + 1;
+                        var expandedChildren:IList = element.visibleChildren;
+                        var lastOpenElement:ITreeLayoutElement = element;
+                        
+                        if(expandedChildren.length == 0)
+                            return Math.min(i + 1, target.numElements - 1);
+
+                        lastOpenElement = ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
+                        return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements - 1);
                     }
                 }
             }
-            
-            return layoutTarget.numElements - 1;
+            return target.numElements - 1;
         }
         
         /**
@@ -302,9 +313,8 @@ package com.bschoenberg.components.layouts
          */
         protected override function calculateDropIndicatorBounds(dropLocation:DropLocation):Rectangle
         {
-            var bounds:Rectangle = this.getElementBounds(dropLocation.dropIndex);
-            if(!bounds)
-                return new Rectangle(0,target.height,target.width,2);
+            var index:int = Math.min(dropLocation.dropIndex, target.numElements - 1);
+            var bounds:Rectangle = this.getElementBounds(index);
             bounds.height = 2;
             return bounds;
         }
@@ -413,8 +423,6 @@ package com.bschoenberg.components.layouts
             }
             
             // Go through the visible elements
-            var minDistance:Number = Number.MAX_VALUE;
-            var bestIndex:int = -1;
             var start:int = 0;//this.firstIndexInView;
             var end:int = target.numElements;//this.lastIndexInView;
             
@@ -434,17 +442,21 @@ package com.bschoenberg.components.layouts
                 //in the middle 50%
                 if (elementBounds.top <= y && y <= elementBounds.bottom)
                 {
-                    var lowerBound:Number = elementBounds.y + elementBounds.height / 4;
-                    var upperBound:Number = elementBounds.y + (3 * elementBounds.height / 4);
+                    var pct0:Number = elementBounds.y;
+                    var pct25:Number = elementBounds.y + elementBounds.height / 4;
+                    var pct75:Number = elementBounds.y + (3 * elementBounds.height / 4);
+                    var pct100:Number = elementBounds.y + elementBounds.height;
                     
-                    if(y > lowerBound && y < upperBound)
+                    //in the middle
+                    if(y >= pct25 && y < pct75)
                     {
                         //insert on ourself at 0
                         loc.parentDropIndex = i;
                         loc.dropIndex = 0;
                         return loc;
                     }
-                    else if (y > elementBounds.y && y < lowerBound)
+                    //on the top
+                    else if (y >= pct0 && y < pct25)
                     {
                         //get the current elements parent element and 
                         //insert into that at our index
@@ -457,7 +469,8 @@ package com.bschoenberg.components.layouts
                             loc.dropIndex = prevTopLevelElementCount;
                         return loc;
                     }
-                    else if(y > upperBound && y < elementBounds.y + elementBounds.height)
+                    //on the bottom
+                    else if(y >= pct75  && y < pct100)
                     {
                         //get the current elements parent element
                         //insert into that at our index
@@ -555,29 +568,29 @@ package com.bschoenberg.components.layouts
         private function animateLayoutChange():Boolean
         {
             var animationType:int = getAnimationType();
-            var hasSlid:Boolean;
+            var willSlide:Boolean;
             
             if(animationType == COLLAPSING_DOWN)
             {
                 regenerateEffects(true);
                 _verticalScrollAfterLayout = -calcSlideDownHeight().down;
-                hasSlid = parameterizeSlideDownEffect();
+                willSlide = parameterizeSlideDownEffect();
             }
             else if(animationType == NONE)
             {
-                hasSlid = false;
+                willSlide = false;
                 _verticalScrollAfterLayout = 0;
             }
             else
             {
                 regenerateEffects(false);
                 _verticalScrollAfterLayout = 0;
-                hasSlid = parameterizeSlideUpEffect(animationType);
+                willSlide = parameterizeSlideUpEffect(animationType);
             }
             
-            if(hasSlid)
+            if(willSlide)
                 _slideEffect.play();
-            return hasSlid;
+            return willSlide;
         }
         
         private function isEmptyList(value:IList):Boolean

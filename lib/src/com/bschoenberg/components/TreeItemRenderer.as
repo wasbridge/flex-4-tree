@@ -182,16 +182,21 @@ package com.bschoenberg.components
             return item.indentLevel;
         }
         
-        public function get expandedChildren():IList
+        public function get visibleChildren():IList
         {
             var elements:ArrayCollection = new ArrayCollection();
             for each(var child:ITreeItem in item.items)
             {
+                var ele:ITreeLayoutElement = tree.getTreeLayoutElement(child);
+                if(!ele)
+                    continue;
+                
+                elements.addItem(ele);
+                
                 if(!child.expanded)
                     continue;
-                var ele:ITreeLayoutElement = tree.getTreeLayoutElement(child);
-                elements.addItem(ele);
-                elements.addAll(ele.expandedChildren);
+                
+                elements.addAll(ele.visibleChildren);
             }
             return elements;
         }

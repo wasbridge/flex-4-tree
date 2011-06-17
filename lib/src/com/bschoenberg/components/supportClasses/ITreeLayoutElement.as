@@ -55,6 +55,6 @@ package com.bschoenberg.components.supportClasses
         /**
         * All of the expanded children of this element 
         */ 
-        function get expandedChildren():IList;
+        function get visibleChildren():IList;
     }
 }

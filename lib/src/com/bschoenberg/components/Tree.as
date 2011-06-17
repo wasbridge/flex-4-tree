@@ -356,14 +356,22 @@ package com.bschoenberg.components
             {
                 if(_dataSource == null)
                     dataSource = new TreeDataSource();
+                
                 if(dl.dropIndex > dataSource.items.length)
                     dl.dropIndex = dataSource.items.length;
                 
                 //if we are the initiator do a move, otherwise an add
                 if(event.dragInitiator == this)
+                {
+                    if(itemToAdd == dataSource.items[dl.dropIndex])
+                        return;
+                    
                     dataSource.moveItem(itemToAdd,dl.dropIndex);
+                }
                 else
+                {
                     dataSource.addItemAt(itemToAdd,dl.dropIndex,null,false);
+                }
             }
             else
             {
@@ -372,16 +380,20 @@ package com.bschoenberg.components
                 parentItem.expanded = true;
                 if(dl.dropIndex > parentItem.items.length)
                     dl.dropIndex = dataSource.items.length;
-                
-                if(itemToAdd == parentItem ||
-                    itemToAdd.hasDescendant(parentItem))
-                    return;
-                
+                                
                 //move if we are the initiator
                 if(event.dragInitiator == this)
+                {
+                    if(itemToAdd == parentItem ||
+                        itemToAdd.hasDescendant(parentItem))
+                        return;
+                    
                     dataSource.moveItem(itemToAdd,dl.dropIndex,parentItem);
+                }
                 else
+                {
                     parentItem.addItemAt(itemToAdd,dl.dropIndex,false);
+                }
             }
             
             //since we are scolling ourself here, just do the update
