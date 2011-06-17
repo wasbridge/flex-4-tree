@@ -22,24 +22,29 @@ THE SOFTWARE.
 
 package com.bschoenberg.components.layouts
 {
-    import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
     import com.bschoenberg.components.layouts.supportClasses.TreeDropLocation;
+    import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
     
     import flash.display.DisplayObject;
     import flash.display.Sprite;
     import flash.events.Event;
+    import flash.events.TimerEvent;
     import flash.geom.Point;
     import flash.geom.Rectangle;
     import flash.utils.Dictionary;
+    import flash.utils.Timer;
     
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
+    import mx.core.ILayoutElement;
     import mx.core.UIComponent;
+    import mx.core.mx_internal;
     import mx.events.DragEvent;
     import mx.events.EffectEvent;
     
     import spark.components.supportClasses.GroupBase;
     import spark.effects.Move;
+    import spark.layouts.supportClasses.DropLocation;
     import spark.layouts.supportClasses.LayoutBase;
     
     public class TreeLayout extends LayoutBase
@@ -49,6 +54,10 @@ package com.bschoenberg.components.layouts
         private static const EXPANDING:int = 2;
         private static const COLLAPSING:int = 3;
         private static const COLLAPSING_DOWN:int = 4;
+        
+        private var _dragScrollTimer:Timer;
+        private var _dragScrollDelta:Point;
+        private var _dragScrollEvent:DragEvent;
         
         //need to track this so i can move the mask as we scroll
         private var _previousVerticalScrollPosition:Number = -1;
@@ -80,7 +89,7 @@ package com.bschoenberg.components.layouts
             super();
             _masks = new Dictionary();
         }
-                
+        
         private function maskElement(element:DisplayObject, bounds:Rectangle):void
         {
             var offset:Point = target.localToGlobal(new Point(0,0));
@@ -148,30 +157,255 @@ package com.bschoenberg.components.layouts
             layoutCompleted();            
         }
         
-        public function showTreeDropIndicator(dropLocation:TreeDropLocation):void
+        /**
+         *  @inherit
+         */
+        public override function showDropIndicator(dropLocation:DropLocation):void
         {
-            //TODO Fill me in!
+            if (!dropIndicator)
+                return;
+            
+            // Make the drop indicator invisible, we'll make it visible 
+            // only if successfully sized and positioned
+            dropIndicator.visible = false;
+            
+            // Check for drag scrolling
+            var dragScrollElapsedTime:int = 0;
+            if (_dragScrollTimer)
+                dragScrollElapsedTime = _dragScrollTimer.currentCount * _dragScrollTimer.delay;
+            
+            _dragScrollDelta = calculateDragScrollDelta(dropLocation,
+                dragScrollElapsedTime);
+            if (_dragScrollDelta)
+            {
+                // Update the drag-scroll event
+                _dragScrollEvent = dropLocation.dragEvent;
+                
+                if (!dragScrollingInProgress())
+                {
+                    // Creates a timer, immediately updates the scroll position
+                    // based on _dragScrollDelta and redispatches the event.
+                    startDragScrolling();
+                    return;
+                }
+                else
+                {
+                    if (mx_internal::dragScrollHidesIndicator)
+                        return;
+                }
+            }
+            else
+                stopDragScrolling();
+            
+            // Show the drop indicator
+            var bounds:Rectangle = calculateDropIndicatorBounds(dropLocation);
+            if (!bounds)
+                return;
+            
+            if (dropIndicator is ILayoutElement)
+            {
+                var element:ILayoutElement = ILayoutElement(dropIndicator);
+                element.setLayoutBoundsSize(bounds.width, bounds.height);
+                element.setLayoutBoundsPosition(bounds.x, bounds.y);
+            }
+            else
+            {
+                dropIndicator.width = bounds.width;
+                dropIndicator.height = bounds.height;
+                dropIndicator.x = bounds.x;
+                dropIndicator.y = bounds.y;
+            }
+            
+            dropIndicator.visible = true;
         }
         
-        public function calculateTreeDropLocation(dragEvent:DragEvent):TreeDropLocation
+        /**
+         *  @inherit
+         */
+        public override function hideDropIndicator():void
         {
-            var retVal:TreeDropLocation = new TreeDropLocation();
-            retVal.dragEvent = dragEvent;
-            retVal.dropPoint = target.globalToLocal(new Point(dragEvent.stageX,dragEvent.stageY));
-            return calculateTreeDropIndicies(retVal.dropPoint,retVal);
+            stopDragScrolling();
+            if (dropIndicator)
+                dropIndicator.visible = false;
         }
         
-        protected function calculateTreeDropIndicies(p:Point,loc:TreeDropLocation):TreeDropLocation
+        /**
+         * @inherit
+         */
+        protected override function calculateDropIndex(x:Number, y:Number):int
         {
-            var x:Number = p.x;
-            var y:Number = p.y;
+            var tdl:TreeDropLocation = calculateTreeDropIndicies(x,y);
+            if(tdl.parentDropIndex == -1)
+                return tdl.dropIndex;
             
             // Iterate over the visible elements
             var layoutTarget:GroupBase = target;
             var count:int = layoutTarget.numElements;
             
             // If there are no items, insert at index 0
-            if (count == 0 || p.y <= 0)
+            if (count == 0 || y <= 0)
+            {
+                return 0;
+            }
+            
+            // Go through the visible elements
+            var minDistance:Number = Number.MAX_VALUE;
+            var bestIndex:int = -1;
+            var start:int = 0;//this.firstIndexInView;
+            var end:int = target.numElements;//this.lastIndexInView;
+            
+            //the first element is always top level
+            var element:ITreeLayoutElement;
+            
+            for (var i:int = start; i <= end; i++)
+            {
+                element = ITreeLayoutElement(target.getElementAt(i));
+                
+                var elementBounds:Rectangle = this.getElementBounds(i);
+                if (!elementBounds || !element)
+                    continue;
+                
+                //if we are in an element insert into that element if we are
+                //in the middle 50%
+                if (elementBounds.top <= y && y <= elementBounds.bottom)
+                {
+                    var lowerBound:Number = elementBounds.y + elementBounds.height / 4;
+                    var upperBound:Number = elementBounds.y + (3 * elementBounds.height / 4);
+                    
+                    // we are in the middle 50%
+                    if(y > lowerBound && y < upperBound)
+                    {
+                        //return the new parent elements index + 1
+                        return i + 1;
+                    }
+                        //we are in the top 25%, we will be dropping on top
+                    else if (y > elementBounds.y && y < lowerBound)
+                    {
+                        return i - 1;
+                    }
+                        //we are in the bottom 25% we will be dropping below this elements open children
+                    else if(y > upperBound && y < elementBounds.y + elementBounds.height)
+                    {
+                        var expandedChildren:IList = element.expandedChildren;
+                        var lastOpenElement:ITreeLayoutElement = 
+                            ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
+                        return target.getElementIndex(lastOpenElement) + 1;
+                    }
+                }
+            }
+            
+            return layoutTarget.numElements - 1;
+        }
+        
+        /**
+         * @inherit
+         */
+        protected override function calculateDropIndicatorBounds(dropLocation:DropLocation):Rectangle
+        {
+            var bounds:Rectangle = this.getElementBounds(dropLocation.dropIndex);
+            if(!bounds)
+                return new Rectangle(0,target.height,target.width,2);
+            bounds.height = 2;
+            return bounds;
+        }
+        /**
+         *  @private 
+         *  True if the drag-scroll timer is running. 
+         */
+        private function dragScrollingInProgress():Boolean
+        {
+            return _dragScrollTimer != null;
+        }
+        
+        /**
+         *  @private 
+         *  Starts the drag-scroll timer.
+         */
+        private function startDragScrolling():void
+        {
+            if (_dragScrollTimer)
+                return;
+            
+            // Setup the timer to handle the subsequet scrolling
+            _dragScrollTimer = new Timer(mx_internal::dragScrollInterval);
+            _dragScrollTimer.addEventListener(TimerEvent.TIMER, dragScroll);
+            _dragScrollTimer.start();
+            
+            // Scroll once on start. Scroll after the _dragScrollTimer is
+            // initialized to prevent stack overflow as a new event will be
+            // dispatched to the list and it may try to start drag scrolling
+            // again.
+            dragScroll(null);
+        }
+        
+        /**
+         *  @private
+         *  Updates the scroll position and dispatches a DragEvent.
+         */
+        private function dragScroll(event:TimerEvent):void
+        {
+            // Scroll the target
+            horizontalScrollPosition += _dragScrollDelta.x;
+            verticalScrollPosition += _dragScrollDelta.y;
+            
+            // Validate target before dispatching the event
+            target.validateNow();
+            
+            // Re-dispatch the event so that the drag initiator handles it as if
+            // the DragProxy is dispatching in response to user input.
+            // Always switch over to DRAG_OVER, don't re-dispatch DRAG_ENTER
+            var dragEvent:DragEvent = new DragEvent(DragEvent.DRAG_OVER,
+                _dragScrollEvent.bubbles,
+                _dragScrollEvent.cancelable, 
+                _dragScrollEvent.dragInitiator, 
+                _dragScrollEvent.dragSource, 
+                _dragScrollEvent.action, 
+                _dragScrollEvent.ctrlKey, 
+                _dragScrollEvent.altKey, 
+                _dragScrollEvent.shiftKey);
+            
+            dragEvent.draggedItem = _dragScrollEvent.draggedItem;
+            dragEvent.localX = _dragScrollEvent.localX;
+            dragEvent.localY = _dragScrollEvent.localY;
+            dragEvent.relatedObject = _dragScrollEvent.relatedObject;
+            _dragScrollEvent.target.dispatchEvent(dragEvent);
+        }
+        
+        /**
+         *  @private
+         *  Stops the drag-scroll timer. 
+         */
+        private function stopDragScrolling():void
+        {
+            if (_dragScrollTimer)
+            {
+                _dragScrollTimer.stop();
+                _dragScrollTimer.removeEventListener(TimerEvent.TIMER, dragScroll);
+                _dragScrollTimer = null;
+            }
+            
+            _dragScrollEvent = null;
+            _dragScrollDelta = null;
+        }
+        
+        public function calculateTreeDropLocation(dragEvent:DragEvent):TreeDropLocation
+        {
+            var retVal:TreeDropLocation = calculateTreeDropIndicies(dragEvent.stageX,dragEvent.stageY);
+            retVal.dragEvent = dragEvent;
+            retVal.dropPoint = target.globalToLocal(new Point(dragEvent.stageX,dragEvent.stageY));
+            return retVal;
+        }
+        
+        protected function calculateTreeDropIndicies(x:Number, y:Number):TreeDropLocation
+        {
+            var loc:TreeDropLocation = new TreeDropLocation();
+            
+            // Iterate over the visible elements
+            var layoutTarget:GroupBase = target;
+            var count:int = layoutTarget.numElements;
+            
+            // If there are no items, insert at index 0
+            if (count == 0 || y <= 0)
             {
                 loc.parentDropIndex = -1;
                 loc.dropIndex = 0;

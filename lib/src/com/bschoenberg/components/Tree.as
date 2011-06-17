@@ -49,6 +49,7 @@ package com.bschoenberg.components
     
     import spark.components.List;
     import spark.events.RendererExistenceEvent;
+    import spark.layouts.supportClasses.DropLocation;
     
     /**
      * Flex 4 Spark Tree component.  It extends List.  
@@ -271,6 +272,19 @@ package com.bschoenberg.components
             }
             
             DragManager.acceptDragDrop(this);
+            
+            // Create the dropIndicator instance. The layout will take care of
+            // parenting, sizing, positioning and validating the dropIndicator.
+            createDropIndicator();
+            
+            // Show focus
+            drawFocus(true);
+            
+            // Notify manager we can drop
+            DragManager.showFeedback(event.ctrlKey ? DragManager.COPY : DragManager.MOVE);
+            
+            // Show drop indicator
+            layout.showDropIndicator(layout.calculateDropLocation(event));
         }
         
         /**
@@ -281,13 +295,29 @@ package com.bschoenberg.components
             if (event.isDefaultPrevented())
                 return;
             
-            var dropLocation:TreeDropLocation = calculateDropLocation(event);
-            
-            // Notify manager we can drop
-            DragManager.showFeedback(DragManager.COPY);
-            
-            // Show drop indicator
-            TreeLayout(layout).showTreeDropIndicator(dropLocation);
+            var dropLocation:DropLocation = layout.calculateDropLocation(event);
+            if (dropLocation)
+            {
+                // Show focus
+                drawFocus(true);
+                
+                // Notify manager we can drop
+                DragManager.showFeedback(event.ctrlKey ? DragManager.COPY : DragManager.MOVE);
+                
+                // Show drop indicator
+                layout.showDropIndicator(dropLocation);
+            }
+            else
+            {
+                // Hide if previously showing
+                layout.hideDropIndicator();
+                
+                // Hide focus
+                drawFocus(false);
+                
+                // Notify manager we can't drop
+                DragManager.showFeedback(DragManager.NONE);
+            }
         }
         
         /**
@@ -315,6 +345,8 @@ package com.bschoenberg.components
         {
             if(event.dragInitiator ==  this && !dragMoveEnabled)
                 return;
+            
+            layout.hideDropIndicator();
             
             var itemToAdd:ITreeItem = ITreeItem(event.dragSource.dataForFormat("tree-item"));
             

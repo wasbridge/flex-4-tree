@@ -51,7 +51,7 @@ package com.bschoenberg.components
         
         private var _indent:Number;
         private var _itemChanged:Boolean;
-                
+        
         public function TreeItemRenderer()
         {
             super();
@@ -180,6 +180,20 @@ package com.bschoenberg.components
                 return 0;
             
             return item.indentLevel;
+        }
+        
+        public function get expandedChildren():IList
+        {
+            var elements:ArrayCollection = new ArrayCollection();
+            for each(var child:ITreeItem in item.items)
+            {
+                if(!child.expanded)
+                    continue;
+                var ele:ITreeLayoutElement = tree.getTreeLayoutElement(child);
+                elements.addItem(ele);
+                elements.addAll(ele.expandedChildren);
+            }
+            return elements;
         }
         
         public function get childElements():IList

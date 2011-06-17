@@ -51,5 +51,10 @@ package com.bschoenberg.components.supportClasses
          * The direct descendents of this elements (as ITreeLayoutElements)
          */ 
         function get childElements():IList;
+        
+        /**
+        * All of the expanded children of this element 
+        */ 
+        function get expandedChildren():IList;
     }
 }
