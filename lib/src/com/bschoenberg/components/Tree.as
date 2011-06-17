@@ -277,9 +277,6 @@ package com.bschoenberg.components
             // parenting, sizing, positioning and validating the dropIndicator.
             createDropIndicator();
             
-            // Show focus
-            drawFocus(true);
-            
             // Notify manager we can drop
             DragManager.showFeedback(event.ctrlKey ? DragManager.COPY : DragManager.MOVE);
             
@@ -298,9 +295,6 @@ package com.bschoenberg.components
             var dropLocation:DropLocation = layout.calculateDropLocation(event);
             if (dropLocation)
             {
-                // Show focus
-                drawFocus(true);
-                
                 // Notify manager we can drop
                 DragManager.showFeedback(event.ctrlKey ? DragManager.COPY : DragManager.MOVE);
                 
@@ -311,9 +305,6 @@ package com.bschoenberg.components
             {
                 // Hide if previously showing
                 layout.hideDropIndicator();
-                
-                // Hide focus
-                drawFocus(false);
                 
                 // Notify manager we can't drop
                 DragManager.showFeedback(DragManager.NONE);
@@ -330,9 +321,6 @@ package com.bschoenberg.components
             
             // Hide if previously showing
             layout.hideDropIndicator();
-            
-            // Hide focus
-            drawFocus(false);
             
             // Destroy the dropIndicator instance
             destroyDropIndicator();
@@ -352,6 +340,8 @@ package com.bschoenberg.components
             
             var dl:TreeDropLocation = TreeLayout(layout).calculateTreeDropLocation(event);
             //new top level item
+            
+            trace(dl.parentDropIndex + " " + dl.dropIndex);
             if(dl.parentDropIndex == -1)
             {
                 if(_dataSource == null)
