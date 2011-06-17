@@ -31,7 +31,6 @@ package com.bschoenberg.components.layouts
     import flash.events.TimerEvent;
     import flash.geom.Point;
     import flash.geom.Rectangle;
-    import flash.system.System;
     import flash.utils.Dictionary;
     import flash.utils.Timer;
     
@@ -169,7 +168,7 @@ package com.bschoenberg.components.layouts
             // Make the drop indicator invisible, we'll make it visible 
             // only if successfully sized and positioned
             dropIndicator.visible = false;
-            
+                        
             // Check for drag scrolling
             var dragScrollElapsedTime:int = 0;
             if (_dragScrollTimer)
@@ -284,7 +283,7 @@ package com.bschoenberg.components.layouts
                     if(y >= pct25 && y < pct75)
                     {
                         //return the new parent elements index + 1
-                        return Math.min(i + 1, target.numElements - 1);
+                        return Math.min(i + 1, target.numElements);
                     }
                         //we are in the top 25%, we will be dropping on top
                     else if (y >= pct0 && y < pct25)
@@ -298,14 +297,14 @@ package com.bschoenberg.components.layouts
                         var lastOpenElement:ITreeLayoutElement = element;
                         
                         if(expandedChildren.length == 0)
-                            return Math.min(i + 1, target.numElements - 1);
+                            return Math.min(i + 1, target.numElements);
 
                         lastOpenElement = ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
-                        return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements - 1);
+                        return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements);
                     }
                 }
             }
-            return target.numElements - 1;
+            return target.numElements;
         }
         
         /**
@@ -313,9 +312,20 @@ package com.bschoenberg.components.layouts
          */
         protected override function calculateDropIndicatorBounds(dropLocation:DropLocation):Rectangle
         {
-            var index:int = Math.min(dropLocation.dropIndex, target.numElements - 1);
-            var bounds:Rectangle = this.getElementBounds(index);
-            bounds.height = 2;
+            var bounds:Rectangle;
+            var index:int = dropLocation.dropIndex;
+            if(index == target.numElements)
+            {
+                bounds = this.getElementBounds(index - 1);
+                bounds.y += bounds.height - 2;
+                bounds.height = 2;
+            }
+            else
+            {
+                bounds = this.getElementBounds(index);
+                bounds.y -= 2;
+                bounds.height = 2;
+            }
             return bounds;
         }
         /**
