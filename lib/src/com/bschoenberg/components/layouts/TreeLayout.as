@@ -59,6 +59,7 @@ package com.bschoenberg.components.layouts
         private var _dragScrollTimer:Timer;
         private var _dragScrollDelta:Point;
         private var _dragScrollEvent:DragEvent;
+        private var _dropLocation:DropLocation;
         
         //need to track this so i can move the mask as we scroll
         private var _previousVerticalScrollPosition:Number = -1;
@@ -163,7 +164,7 @@ package com.bschoenberg.components.layouts
          */
         public override function showDropIndicator(dropLocation:DropLocation):void
         {
-            if (!dropIndicator)
+            if (!dropIndicator || !dropLocation)
                 return;
             
             // Make the drop indicator invisible, we'll make it visible 
@@ -178,10 +179,16 @@ package com.bschoenberg.components.layouts
             if(target.getStyle("interactionMode") == InteractionMode.TOUCH)
             {
                 mx_internal::dragScrollRegionSizeHorizontal = 50;
-                mx_internal::dragScrollRegionSizeVertical = rowHeight * 4;
+                mx_internal::dragScrollRegionSizeVertical = rowHeight * 3;
                 mx_internal::dragScrollInitialDelay = 5;
                 mx_internal::dragScrollSpeed = 20;
             }
+            else
+            {
+                mx_internal::dragScrollRegionSizeVertical = rowHeight * 2;
+                mx_internal::dragScrollSpeed = 20;
+            }
+            
             _dragScrollDelta = calculateDragScrollDelta(dropLocation,
                 dragScrollElapsedTime);
             
@@ -206,35 +213,42 @@ package com.bschoenberg.components.layouts
                 stopDragScrolling();
             
             // Show the drop indicator
-            var bounds:Rectangle = calculateDropIndicatorBounds(dropLocation);
+            /*var bounds:Rectangle = calculateDropIndicatorBounds(dropLocation);
             if (!bounds)
-                return;
+            return;
             
             if (dropIndicator is ILayoutElement)
             {
-                var element:ILayoutElement = ILayoutElement(dropIndicator);
-                element.setLayoutBoundsSize(bounds.width, bounds.height);
-                element.setLayoutBoundsPosition(bounds.x, bounds.y);
+            var element:ILayoutElement = ILayoutElement(dropIndicator);
+            element.setLayoutBoundsSize(bounds.width, bounds.height);
+            element.setLayoutBoundsPosition(bounds.x, bounds.y);
             }
             else
             {
-                dropIndicator.width = bounds.width;
-                dropIndicator.height = bounds.height;
-                dropIndicator.x = bounds.x;
-                dropIndicator.y = bounds.y;
-            }
+            dropIndicator.width = bounds.width;
+            dropIndicator.height = bounds.height;
+            dropIndicator.x = bounds.x;
+            dropIndicator.y = bounds.y;
+            }*/
             
+            _dropLocation = dropLocation;
             dropIndicator.visible = true;
+            invalidateDisplayList();
         }
+        
+        
         
         /**
          *  @inherit
          */
         public override function hideDropIndicator():void
         {
+            _dropLocation = null;
             stopDragScrolling();
             if (dropIndicator)
                 dropIndicator.visible = false;
+            
+            invalidateDisplayList();
         }
         
         public override function calculateDropLocation(dragEvent:DragEvent):DropLocation
@@ -270,7 +284,7 @@ package com.bschoenberg.components.layouts
             //the first element is always top level
             var element:ITreeLayoutElement;
             
-            for (var i:int = start; i <= end; i++)
+            for (var i:int = start; i < end; i++)
             {
                 element = ITreeLayoutElement(target.getElementAt(i));
                 
@@ -299,7 +313,7 @@ package com.bschoenberg.components.layouts
                         return i;
                     }
                         //we are in the bottom 25% we will be dropping below this elements open children
-                    else if(y >= pct75 && y < pct100)
+                    else if(y >= pct75 && y <= pct100)
                     {
                         var expandedChildren:IList = element.visibleChildren;
                         var lastOpenElement:ITreeLayoutElement = element;
@@ -311,6 +325,11 @@ package com.bschoenberg.components.layouts
                         return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements);
                     }
                 }
+                else if(elementBounds.top > y)
+                {
+                    return Math.min(i, target.numElements); 
+                }
+                    
             }
             return target.numElements;
         }
@@ -320,19 +339,22 @@ package com.bschoenberg.components.layouts
          */
         protected override function calculateDropIndicatorBounds(dropLocation:DropLocation):Rectangle
         {
+            if(dropLocation == null)
+                return null;
+            
             var bounds:Rectangle;
             var index:int = dropLocation.dropIndex;
             if(index == target.numElements)
             {
                 bounds = this.getElementBounds(index - 1);
-                bounds.y += bounds.height - 2;
-                bounds.height = 2;
+                bounds.y += bounds.height;
+                //bounds.height = 2;
             }
             else
             {
                 bounds = this.getElementBounds(index);
-                bounds.y -= 2;
-                bounds.height = 2;
+                //bounds.y -= 2;
+                //bounds.height = 2;
             }
             return bounds;
         }
@@ -538,8 +560,24 @@ package com.bschoenberg.components.layouts
             var y:Number = paddingTop;
             var layoutElement:ITreeLayoutElement;
             var index:int;
-            for (index=0; index < target.numElements; index++)
+            
+            if(_dropLocation)
+                trace("yes: " + _dropLocation.dropIndex);
+            else
+                trace("no: ");
+            
+            for (index=0; index <= target.numElements; index++)
             {
+                if(_dropLocation && _dropLocation.dropIndex == index)
+                {
+                    dropIndicator.visible = true;
+                    dropIndicator.x = paddingLeft;
+                    dropIndicator.y = y;
+                    dropIndicator.height = rowHeight;
+                    dropIndicator.width = unscaledWidth - paddingLeft - paddingRight;
+                    y+= rowHeight;
+                }
+                
                 layoutElement = ITreeLayoutElement(target.getElementAt(index));
                 if (!layoutElement || !layoutElement.includeInLayout)
                     continue;
