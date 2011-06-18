@@ -59,7 +59,6 @@ package com.bschoenberg.components.layouts
         private var _dragScrollTimer:Timer;
         private var _dragScrollDelta:Point;
         private var _dragScrollEvent:DragEvent;
-        private var _dropLocation:DropLocation;
         
         //need to track this so i can move the mask as we scroll
         private var _previousVerticalScrollPosition:Number = -1;
@@ -167,10 +166,6 @@ package com.bschoenberg.components.layouts
             if (!dropIndicator || !dropLocation)
                 return;
             
-            // Make the drop indicator invisible, we'll make it visible 
-            // only if successfully sized and positioned
-            dropIndicator.visible = false;
-            
             // Check for drag scrolling
             var dragScrollElapsedTime:int = 0;
             if (_dragScrollTimer)
@@ -213,37 +208,32 @@ package com.bschoenberg.components.layouts
                 stopDragScrolling();
             
             // Show the drop indicator
-            /*var bounds:Rectangle = calculateDropIndicatorBounds(dropLocation);
+            var bounds:Rectangle = calculateDropIndicatorBounds(dropLocation);
             if (!bounds)
-            return;
+                return;
             
             if (dropIndicator is ILayoutElement)
             {
-            var element:ILayoutElement = ILayoutElement(dropIndicator);
-            element.setLayoutBoundsSize(bounds.width, bounds.height);
-            element.setLayoutBoundsPosition(bounds.x, bounds.y);
+                var element:ILayoutElement = ILayoutElement(dropIndicator);
+                element.setLayoutBoundsSize(bounds.width, bounds.height);
+                element.setLayoutBoundsPosition(bounds.x, bounds.y);
             }
             else
             {
-            dropIndicator.width = bounds.width;
-            dropIndicator.height = bounds.height;
-            dropIndicator.x = bounds.x;
-            dropIndicator.y = bounds.y;
-            }*/
+                dropIndicator.width = bounds.width;
+                dropIndicator.height = bounds.height;
+                dropIndicator.x = bounds.x;
+                dropIndicator.y = bounds.y;
+            }
             
-            _dropLocation = dropLocation;
             dropIndicator.visible = true;
-            invalidateDisplayList();
         }
-        
-        
-        
+                
         /**
          *  @inherit
          */
         public override function hideDropIndicator():void
         {
-            _dropLocation = null;
             stopDragScrolling();
             if (dropIndicator)
                 dropIndicator.visible = false;
@@ -329,7 +319,7 @@ package com.bschoenberg.components.layouts
                 {
                     return Math.min(i, target.numElements); 
                 }
-                    
+                
             }
             return target.numElements;
         }
@@ -347,14 +337,14 @@ package com.bschoenberg.components.layouts
             if(index == target.numElements)
             {
                 bounds = this.getElementBounds(index - 1);
-                bounds.y += bounds.height;
-                //bounds.height = 2;
+                bounds.y -= 2;
+                bounds.height = 2;
             }
             else
             {
                 bounds = this.getElementBounds(index);
-                //bounds.y -= 2;
-                //bounds.height = 2;
+                bounds.y -= 2;
+                bounds.height = 2;
             }
             return bounds;
         }
@@ -552,42 +542,23 @@ package com.bschoenberg.components.layouts
             target.measuredMinHeight = paddingTop + paddingBottom;   
         }
         
-        public override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+        protected function performLayout(unscaledWidth:Number, unscaledHeight:Number):void
         {
-            if(target.numElements == 0)
-                return layoutCompleted();
-            
             var y:Number = paddingTop;
             var layoutElement:ITreeLayoutElement;
             var index:int;
             
-            if(_dropLocation)
-                trace("yes: " + _dropLocation.dropIndex);
-            else
-                trace("no: ");
-            
             for (index=0; index <= target.numElements; index++)
-            {
-                if(_dropLocation && _dropLocation.dropIndex == index)
-                {
-                    dropIndicator.visible = true;
-                    dropIndicator.x = paddingLeft;
-                    dropIndicator.y = y;
-                    dropIndicator.height = rowHeight;
-                    dropIndicator.width = unscaledWidth - paddingLeft - paddingRight;
-                    y+= rowHeight;
-                }
-                
+            {                
                 layoutElement = ITreeLayoutElement(target.getElementAt(index));
                 if (!layoutElement || !layoutElement.includeInLayout)
                     continue;
                 
                 var xOffset:Number = (indent * layoutElement.indentLevel);
                 layoutElement.indent = xOffset;
-                layoutElement.x = paddingLeft;
-                layoutElement.y = y;
-                layoutElement.height = rowHeight;
-                layoutElement.width = unscaledWidth - paddingLeft - paddingRight;
+                layoutElement.setLayoutBoundsPosition(paddingLeft,y);
+                layoutElement.setLayoutBoundsSize(unscaledWidth - paddingLeft - paddingRight,
+                    rowHeight);
                 
                 y += rowHeight;
             }
@@ -596,6 +567,14 @@ package com.bschoenberg.components.layouts
             
             target.setContentSize(unscaledWidth,
                 contentHeight);
+        }
+        
+        public override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+        {
+            if(target.numElements == 0)
+                return layoutCompleted();
+            
+            performLayout(unscaledWidth, unscaledHeight);
             
             if(!_animate)
             {

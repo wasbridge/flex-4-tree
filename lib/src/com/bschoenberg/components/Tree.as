@@ -340,7 +340,6 @@ package com.bschoenberg.components
             var dl:TreeDropLocation = TreeLayout(layout).calculateTreeDropLocation(event);
             //new top level item
             
-            trace(dl.parentDropIndex + " " + dl.dropIndex);
             if(dl.parentDropIndex == -1)
             {
                 if(_dataSource == null)
