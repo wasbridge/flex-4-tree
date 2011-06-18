@@ -228,7 +228,7 @@ package com.bschoenberg.components.layouts
             
             dropIndicator.visible = true;
         }
-                
+        
         /**
          *  @inherit
          */
@@ -267,61 +267,32 @@ package com.bschoenberg.components.layouts
             if (target.numElements == 0 || y <= 0)
                 return 0;
             
-            // Go through the visible elements
-            var start:int = 0;//this.firstIndexInView;
-            var end:int = target.numElements;//this.lastIndexInView;
+            var index:int = Math.floor(y/rowHeight);
+            var leftOvers:Number = y % rowHeight;
             
-            //the first element is always top level
-            var element:ITreeLayoutElement;
+            if(index >= target.numElements)
+                return target.numElements;
             
-            for (var i:int = start; i < end; i++)
+            if(leftOvers <= rowHeight * .25)
             {
-                element = ITreeLayoutElement(target.getElementAt(i));
-                
-                var elementBounds:Rectangle = this.getElementBounds(i);
-                if (!elementBounds || !element)
-                    continue;
-                
-                //if we are in an element insert into that element if we are
-                //in the middle 50%
-                if (elementBounds.top <= y && y <= elementBounds.bottom)
-                {
-                    var pct0:Number = elementBounds.y;
-                    var pct25:Number = elementBounds.y + elementBounds.height / 4;
-                    var pct75:Number = elementBounds.y + (3 * elementBounds.height / 4);
-                    var pct100:Number = elementBounds.y + elementBounds.height;
-                    
-                    // we are in the middle 50%
-                    if(y >= pct25 && y < pct75)
-                    {
-                        //return the new parent elements index + 1
-                        return Math.min(i + 1, target.numElements);
-                    }
-                        //we are in the top 25%, we will be dropping on top
-                    else if (y >= pct0 && y < pct25)
-                    {
-                        return i;
-                    }
-                        //we are in the bottom 25% we will be dropping below this elements open children
-                    else if(y >= pct75 && y <= pct100)
-                    {
-                        var expandedChildren:IList = element.visibleChildren;
-                        var lastOpenElement:ITreeLayoutElement = element;
-                        
-                        if(expandedChildren.length == 0)
-                            return Math.min(i + 1, target.numElements);
-                        
-                        lastOpenElement = ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
-                        return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements);
-                    }
-                }
-                else if(elementBounds.top > y)
-                {
-                    return Math.min(i, target.numElements); 
-                }
-                
+                return Math.min(index, target.numElements);
             }
-            return target.numElements;
+            else if(leftOvers >= rowHeight * .75)
+            {
+                var element:ITreeLayoutElement = ITreeLayoutElement(target.getElementAt(index));
+                var expandedChildren:IList = element.visibleChildren;
+                var lastOpenElement:ITreeLayoutElement = element;
+                
+                if(expandedChildren.length == 0)
+                    return Math.min(index + 1, target.numElements);
+                
+                lastOpenElement = ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
+                return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements);
+            }
+            else 
+            {
+                return Math.min(index + 1, target.numElements);
+            }
         }
         
         /**
@@ -443,8 +414,7 @@ package com.bschoenberg.components.layouts
             var loc:TreeDropLocation = new TreeDropLocation();
             
             // Iterate over the visible elements
-            var layoutTarget:GroupBase = target;
-            var count:int = layoutTarget.numElements;
+            var count:int = target.numElements;
             
             // If there are no items, insert at index 0
             if (count == 0 || y <= 0)
@@ -462,58 +432,56 @@ package com.bschoenberg.components.layouts
             var prevTopLevelElementCount:int = 0;
             var element:ITreeLayoutElement;
             
-            for (var i:int = start; i <= end; i++)
+            for (var i:int = start; i < end; i++)
             {
                 element = ITreeLayoutElement(target.getElementAt(i));
                 
-                var elementBounds:Rectangle = this.getElementBounds(i);
-                if (!elementBounds || !element)
+                if (!element)
                     continue;
                 
-                //if we are in an element insert into that element if we are
-                //in the middle 50%
-                if (elementBounds.top <= y && y <= elementBounds.bottom)
+                //if our y is below this element, or above this element
+                if(y < element.y || y > element.y + element.height)
                 {
-                    var pct0:Number = elementBounds.y;
-                    var pct25:Number = elementBounds.y + elementBounds.height / 4;
-                    var pct75:Number = elementBounds.y + (3 * elementBounds.height / 4);
-                    var pct100:Number = elementBounds.y + elementBounds.height;
-                    
-                    //in the middle
-                    if(y >= pct25 && y < pct75)
-                    {
-                        //insert on ourself at 0
-                        loc.parentDropIndex = i;
-                        loc.dropIndex = 0;
-                        return loc;
-                    }
-                        //on the top
-                    else if (y >= pct0 && y < pct25)
-                    {
-                        //get the current elements parent element and 
-                        //insert into that at our index
-                        loc.parentDropIndex = target.getElementIndex(element.parentElement);
-                        //if we have a parent, the drop index is in its children
-                        if(element.parentElement)
-                            loc.dropIndex = element.parentElement.childElements.getItemIndex(element);
-                            //if we have no parent, the drop index is in the dataProvider
-                        else
-                            loc.dropIndex = prevTopLevelElementCount;
-                        return loc;
-                    }
-                        //on the bottom
-                    else if(y >= pct75  && y < pct100)
-                    {
-                        //get the current elements parent element
-                        //insert into that at our index
-                        loc.parentDropIndex = target.getElementIndex(element.parentElement);
-                        if(element.parentElement)
-                            loc.dropIndex = element.parentElement.childElements.getItemIndex(element) + 1;
-                            //if we have no parent, the drop index is in the dataProvider
-                        else
-                            loc.dropIndex = prevTopLevelElementCount + 1;
-                        return loc;
-                    }
+                    if(!element.parentElement)
+                        prevTopLevelElementCount++;
+                    continue;
+                }
+                
+                var pct25:Number = element.y + (element.height * .25);
+                var pct75:Number = element.y + (element.height * .75);
+                var pct100:Number = element.y + element.height;
+                
+                if (y < pct25)
+                {
+                    //get the current elements parent element and 
+                    //insert into that at our index
+                    loc.parentDropIndex = target.getElementIndex(element.parentElement);
+                    //if we have a parent, the drop index is in its children
+                    if(element.parentElement)
+                        loc.dropIndex = element.parentElement.childElements.getItemIndex(element);
+                        //if we have no parent, the drop index is in the dataProvider
+                    else
+                        loc.dropIndex = prevTopLevelElementCount;
+                    return loc;
+                }
+                else if(y >= pct25 && y <= pct75)
+                {
+                    //insert on ourself at 0
+                    loc.parentDropIndex = i;
+                    loc.dropIndex = 0;
+                    return loc;
+                }
+                else if(y > pct75)
+                {
+                    //get the current elements parent element
+                    //insert into that at our index
+                    loc.parentDropIndex = target.getElementIndex(element.parentElement);
+                    if(element.parentElement)
+                        loc.dropIndex = element.parentElement.childElements.getItemIndex(element) + 1;
+                        //if we have no parent, the drop index is in the dataProvider
+                    else
+                        loc.dropIndex = prevTopLevelElementCount + 1;
+                    return loc;
                 }
                 
                 if(!element.parentElement)
