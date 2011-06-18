@@ -37,6 +37,7 @@ package com.bschoenberg.components.layouts
     import mx.collections.ArrayCollection;
     import mx.collections.IList;
     import mx.core.ILayoutElement;
+    import mx.core.InteractionMode;
     import mx.core.UIComponent;
     import mx.core.mx_internal;
     import mx.events.DragEvent;
@@ -168,12 +169,19 @@ package com.bschoenberg.components.layouts
             // Make the drop indicator invisible, we'll make it visible 
             // only if successfully sized and positioned
             dropIndicator.visible = false;
-                        
+            
             // Check for drag scrolling
             var dragScrollElapsedTime:int = 0;
             if (_dragScrollTimer)
                 dragScrollElapsedTime = _dragScrollTimer.currentCount * _dragScrollTimer.delay;
             
+            if(target.getStyle("interactionMode") == InteractionMode.TOUCH)
+            {
+                mx_internal::dragScrollRegionSizeHorizontal = 50;
+                mx_internal::dragScrollRegionSizeVertical = rowHeight * 4;
+                mx_internal::dragScrollInitialDelay = 5;
+                mx_internal::dragScrollSpeed = 20;
+            }
             _dragScrollDelta = calculateDragScrollDelta(dropLocation,
                 dragScrollElapsedTime);
             
@@ -298,7 +306,7 @@ package com.bschoenberg.components.layouts
                         
                         if(expandedChildren.length == 0)
                             return Math.min(i + 1, target.numElements);
-
+                        
                         lastOpenElement = ITreeLayoutElement(expandedChildren.getItemAt(expandedChildren.length - 1));
                         return Math.min(target.getElementIndex(lastOpenElement) + 1, target.numElements);
                     }
@@ -467,7 +475,7 @@ package com.bschoenberg.components.layouts
                         loc.dropIndex = 0;
                         return loc;
                     }
-                    //on the top
+                        //on the top
                     else if (y >= pct0 && y < pct25)
                     {
                         //get the current elements parent element and 
@@ -481,7 +489,7 @@ package com.bschoenberg.components.layouts
                             loc.dropIndex = prevTopLevelElementCount;
                         return loc;
                     }
-                    //on the bottom
+                        //on the bottom
                     else if(y >= pct75  && y < pct100)
                     {
                         //get the current elements parent element
