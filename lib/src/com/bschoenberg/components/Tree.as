@@ -25,6 +25,7 @@ package com.bschoenberg.components
     import com.bschoenberg.components.events.TreeEvent;
     import com.bschoenberg.components.layouts.TreeLayout;
     import com.bschoenberg.components.layouts.supportClasses.TreeDropLocation;
+    import com.bschoenberg.components.skins.TreeSkin;
     import com.bschoenberg.components.supportClasses.ITreeDataSource;
     import com.bschoenberg.components.supportClasses.ITreeItem;
     import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
@@ -88,7 +89,7 @@ package com.bschoenberg.components
             super();
             
             layout = new TreeLayout();
-            
+            setStyle("skinClass",TreeSkin);
             itemRenderer = new ClassFactory(TreeItemRenderer);
             
             _yAnimation = new AnimateProperty();

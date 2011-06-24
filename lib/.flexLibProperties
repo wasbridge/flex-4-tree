@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="true" version="3">
-  <includeClasses/>
+  <includeClasses>
+    <classEntry path="com.bschoenberg.components.skins.TreeSkin"/>
+  </includeClasses>
   <includeResources/>
   <namespaceManifests/>
 </flexLibProperties>

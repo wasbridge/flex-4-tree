@@ -84,7 +84,9 @@ package com.bschoenberg.components.layouts
         private var _paddingLeft:Number = 0;
         private var _paddingRight:Number = 0;
         private var _rowHeight:Number = 80;
-        
+
+        private var _dropLocation:DropLocation;
+
         public function TreeLayout()
         {
             super();
@@ -227,6 +229,9 @@ package com.bschoenberg.components.layouts
             }
             
             dropIndicator.visible = true;
+            
+            _dropLocation = dropLocation;
+            target.invalidateDisplayList();
         }
         
         /**
@@ -237,6 +242,9 @@ package com.bschoenberg.components.layouts
             stopDragScrolling();
             if (dropIndicator)
                 dropIndicator.visible = false;
+            
+            _dropLocation = null;
+            target.invalidateDisplayList();
             
             invalidateDisplayList();
         }
@@ -517,7 +525,20 @@ package com.bschoenberg.components.layouts
             var index:int;
             
             for (index=0; index <= target.numElements; index++)
-            {                
+            {
+                if(_dropLocation && _dropLocation.dropIndex == index)
+                {
+                    dropIndicator.visible = true;
+                    dropIndicator.x = paddingLeft;
+                    if(dropLocationInsideElement(_dropLocation))
+                        dropIndicator.y = y - rowHeight/2;
+                    else
+                        dropIndicator.y = y;
+                    dropIndicator.height = 2;
+                    dropIndicator.width = unscaledWidth - paddingLeft - paddingRight;
+                    //y+= rowHeight;
+                }
+                
                 layoutElement = ITreeLayoutElement(target.getElementAt(index));
                 if (!layoutElement || !layoutElement.includeInLayout)
                     continue;
@@ -532,9 +553,19 @@ package com.bschoenberg.components.layouts
             }
             
             var contentHeight:Number = Math.max(target.measuredHeight, y + paddingBottom);
+            target.setContentSize(unscaledWidth, contentHeight);
+        }
+        
+        protected function dropLocationInsideElement(dropLocation:DropLocation):Boolean
+        {
+            var y:Number = dropLocation.dropPoint.y;
+            if(y/rowHeight >= target.numElements)
+                return false;
             
-            target.setContentSize(unscaledWidth,
-                contentHeight);
+            var leftOvers:Number = y % rowHeight;
+            if(leftOvers > rowHeight * .25 && leftOvers < rowHeight * .75)
+                return true;
+            return false;
         }
         
         public override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
