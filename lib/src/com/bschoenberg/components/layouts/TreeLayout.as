@@ -100,9 +100,10 @@ package com.bschoenberg.components.layouts
             mask.cacheAsBitmap = true;
             mask.x = offset.x + bounds.x;
             mask.y = offset.y + bounds.y;
-            mask.graphics.beginFill(0xFF0000);
+            mask.graphics.beginFill(0xFF0000,0);
             mask.graphics.drawRect(0,0,
                 bounds.width,bounds.height);
+            mask.graphics.endFill();
             target.stage.addChild(mask);
             element.mask = mask;
             _masks[element] = new MaskData(mask, bounds);
@@ -143,7 +144,7 @@ package com.bschoenberg.components.layouts
                 mask.y = offset.y + maskBounds.y + (ratio * maskBounds.height);
                 
                 mask.graphics.clear();
-                mask.graphics.beginFill(0xFF0000);
+                mask.graphics.beginFill(0xFF0000,0);
                 mask.graphics.drawRect(0,0, maskBounds.width, (1-ratio) * maskBounds.height);
                 mask.graphics.endFill();
             }
