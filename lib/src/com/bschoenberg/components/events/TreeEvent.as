@@ -34,22 +34,30 @@ package com.bschoenberg.components.events
         public static const NODE_EXPANDED:String = "nodeExpanded";
         public static const NODE_COLLAPSED:String = "nodeCollapsed";
         public static const NODE_REMOVED:String = "nodeRemoved";
+        public static const NODE_MOVED:String = "nodeMoved";
         
         private var _node:ITreeItem;
         private var _parentNode:ITreeItem;
         
+        private var _index:int;
+        private var _oldParentNode:ITreeItem;
+        
         public function TreeEvent(type:String, node:ITreeItem=null, parentNode:ITreeItem=null,
+                                  oldParentNode:ITreeItem=null,index:int=-1,
                                   bubbles:Boolean=true, cancelable:Boolean=false)
         {
             super(type, bubbles, cancelable);
             
             _parentNode = parentNode;
             _node = node;
+            
+            _oldParentNode = oldParentNode;
+            _index = index;
         }
         
         public override function clone():Event
         {
-            return new TreeEvent(type,node, parentNode, bubbles,cancelable);
+            return new TreeEvent(type,node, parentNode, oldParentNode, index, bubbles,cancelable);
         }
         
         public function get node():ITreeItem
@@ -60,6 +68,16 @@ package com.bschoenberg.components.events
         public function get parentNode():ITreeItem
         {
             return _parentNode; 
+        }
+        
+        public function get oldParentNode():ITreeItem
+        {
+            return _oldParentNode; 
+        }
+        
+        public function get index():int 
+        {
+            return _index;
         }
     }
 }

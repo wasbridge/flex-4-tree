@@ -74,7 +74,7 @@ package com.bschoenberg.components.supportClasses
          * @param index The index to move the item to
          * @param parent The new parent item, null for top level
          */ 
-        function moveItem(item:ITreeItem,index:int,newParent:ITreeItem=null):void;
+        function moveItem(item:ITreeItem,index:int,newParent:ITreeItem=null,dispatchTreeEvent:Boolean=true):void;
         
         /**
          * A list of all of the top level items

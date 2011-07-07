@@ -278,7 +278,7 @@ package com.bschoenberg.components.supportClasses
         /**
          * @inheritDoc
          */ 
-        public function moveItem(item:ITreeItem,index:int,parentItem:ITreeItem=null):void
+        public function moveItem(item:ITreeItem,index:int,parentItem:ITreeItem=null,dispatchTreeEvent:Boolean=true):void
         {
             if(item == null)
                 return;
@@ -308,6 +308,9 @@ package com.bschoenberg.components.supportClasses
             silentAdd(item,index,parentItem);
             
             dispatchEvent(new TreeDataEvent(TreeDataEvent.MOVE,item,parentItem,oldParent,index));
+            if(dispatchTreeEvent)
+                dispatchEvent(new TreeEvent(TreeEvent.NODE_MOVED,item,parentItem,oldParent,index));
+            
         }
         
         /**

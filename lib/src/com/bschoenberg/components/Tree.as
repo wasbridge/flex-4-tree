@@ -447,6 +447,21 @@ package com.bschoenberg.components
         }
         
         /**
+         * Called when a node has been removed from the datasource
+         */ 
+        protected function nodeRemovedHandler(e:TreeEvent):void
+        {
+            _dataProviderChanged = true;
+            invalidateProperties();
+        }
+        
+        protected function nodeMovedHandler(e:TreeEvent):void
+        {
+            _dataProviderChanged = true;
+            invalidateProperties();
+        }
+        
+        /**
          * Scroll the tree and dispatch a SCROLL_COMPLETE when done
          * 
          * @param verticalScrollPosition The location to scroll to
@@ -459,7 +474,7 @@ package com.bschoenberg.components
             if(!animate)
             {
                 dataGroup.verticalScrollPosition = verticalScrollPosition;
-                dispatchEvent(new TreeEvent(TreeEvent.SCROLL_COMPLETE,null,null,false));
+                dispatchEvent(new TreeEvent(TreeEvent.SCROLL_COMPLETE,null,null,null,-1,false));
                 return;
             }
             
@@ -489,7 +504,7 @@ package com.bschoenberg.components
         {
             //we get this listener called twice which means we execute its handler too many
             //times
-            dispatchEvent(new TreeEvent(TreeEvent.SCROLL_COMPLETE,null,null,false));
+            dispatchEvent(new TreeEvent(TreeEvent.SCROLL_COMPLETE,null,null,null,-1,false));
         }
         
         /**
@@ -607,6 +622,9 @@ package com.bschoenberg.components
             dataSource.removeEventListener(TreeEvent.NODE_INSERTED,nodeInsertedHandler);
             dataSource.removeEventListener(TreeEvent.NODE_EXPANDED, nodeExpandedHandler);
             dataSource.removeEventListener(TreeEvent.NODE_COLLAPSED, nodeCollapsedHandler);
+            dataSource.removeEventListener(TreeEvent.NODE_REMOVED, nodeRemovedHandler);
+            dataSource.removeEventListener(TreeEvent.NODE_MOVED,nodeMovedHandler);
+            
         }
         
         /**
@@ -617,6 +635,8 @@ package com.bschoenberg.components
             dataSource.addEventListener(TreeEvent.NODE_INSERTED,nodeInsertedHandler);
             dataSource.addEventListener(TreeEvent.NODE_EXPANDED, nodeExpandedHandler);
             dataSource.addEventListener(TreeEvent.NODE_COLLAPSED, nodeCollapsedHandler);
+            dataSource.addEventListener(TreeEvent.NODE_REMOVED, nodeRemovedHandler);
+            dataSource.addEventListener(TreeEvent.NODE_MOVED,nodeMovedHandler);
         }
         
         public function set dataSource(value:ITreeDataSource):void
