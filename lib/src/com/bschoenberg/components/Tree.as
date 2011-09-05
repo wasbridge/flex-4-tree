@@ -30,6 +30,7 @@ package com.bschoenberg.components
     import com.bschoenberg.components.supportClasses.ITreeItem;
     import com.bschoenberg.components.supportClasses.ITreeLayoutElement;
     import com.bschoenberg.components.supportClasses.TreeDataSource;
+    import com.bschoenberg.components.supportClasses.TreeItem;
     
     import flash.display.DisplayObject;
     import flash.events.Event;
@@ -148,7 +149,7 @@ package com.bschoenberg.components
                 event.preventDefault();
                 return;
             }
-            
+
             //get the renderer and listen for drags or releases
             var renderer:ITreeLayoutElement = ITreeLayoutElement(event.currentTarget);
             renderer.addEventListener(MouseEvent.MOUSE_MOVE,rendererMouseMove,false,int.MAX_VALUE,true);
@@ -165,7 +166,7 @@ package com.bschoenberg.components
             //if we don't have a start point or dragging is not enabled
             if (!_mouseDownPoint || !dragEnabled)
                 return;
-            
+			
             //f we have been told to stop, stop
             if (event.isDefaultPrevented())
                 return;
@@ -230,8 +231,8 @@ package com.bschoenberg.components
             di.width = width * .75;
             di.height = TreeLayout(layout).rowHeight;
             di.owner = this;
-            di.setStyle("contentBackgroundColor",getStyle("contentBackgroundColor"));
-            di.setStyle("contentBackgroundAlpha",getStyle("contentBackgroundAlpha"));
+            di.setStyle("contentBackgroundColor",0x000000);
+            di.setStyle("contentBackgroundAlpha",1);
             ITreeLayoutElement(di).dragging = true;
             return IFlexDisplayObject(di);
         }
@@ -265,6 +266,7 @@ package com.bschoenberg.components
          */ 
         protected override function dragEnterHandler(event:DragEvent):void
         {
+			
             if(event.dragInitiator ==  this && !dragMoveEnabled)
             {
                 DragManager.showFeedback(DragManager.NONE);
@@ -331,6 +333,7 @@ package com.bschoenberg.components
          */ 
         protected override function dragDropHandler(event:DragEvent):void
         {
+
             if(event.dragInitiator ==  this && !dragMoveEnabled)
                 return;
             
@@ -672,5 +675,39 @@ package com.bschoenberg.components
             //reset the vertical scroll position
             dataGroup.verticalScrollPosition = oldVerticalScrollPosition;
         }
+		
+		
+		/**
+		 * Function Open All nodes du Tree
+		 ***/
+		public function openAllNodes ():void
+		{
+			for each(var item:ITreeItem in dataSource.allItems)
+			item.expanded = true;
+			invalidateProperties();
+			
+		}
+		/**
+		 *  Function Close All Nodes du Tree 
+		 **/		
+		public function closeAllNodes ():void
+		{
+			for each(var item:ITreeItem in dataSource.expandedItems)
+			item.expanded = false;
+			updateDataProvider();
+			invalidateProperties();
+			
+		}
+		/**
+		 * Open a first node from start
+		 ***/
+		public function expandItem ( node:TreeItem, open:Boolean = true ):void
+		{
+			if (!dataSource) return;
+			node.expanded = open;
+			invalidateProperties();
+			
+		}
+		
     }
 }
