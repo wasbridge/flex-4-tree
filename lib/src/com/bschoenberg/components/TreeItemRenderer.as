@@ -69,6 +69,7 @@ package com.bschoenberg.components
             addElement(expandButton);
             
             labelDisplay = new Label();
+			labelDisplay.setStyle("color",this.getStyle('color'));
             labelDisplay.styleParent = tree;
             addElement(labelDisplay);
             
